@@ -1,0 +1,12 @@
+[package]
+name = "bss-backend"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { version = "*", features = ["rt-multi-thread", "macros"] }
+axum = "*"
+serde_json = "*"
+serde = { version = "1.0.214", features = ["derive"] }
+jsonwebtoken = "*"
+chrono = "*"

@@ -1,0 +1,19 @@
+This is a simple example of what a "Back End" service might look like in the Rust programming language.
+
+Right now it:
+1) services a /login endpoint that returns a JWT token
+
+Start the service with cargo:
+$ cargo run
+
+You can use HTTPie (https://httpie.io/) to test it out:
+
+$ http POST localhost:3000/login username=admin password=password
+HTTP/1.1 200 OK
+content-length: 181
+content-type: application/json
+date: Wed, 30 Oct 2024 23:21:28 GMT
+{
+    "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6MTczMDMzNDA4OCwiaWF0IjoxNzMwMzMwNDg4fQ.oPfuz1bC4AW2q_d3Dh3BblJCLAGcnIvhhavIqVS8yNw",
+    "token_type": "Bearer"
+}
