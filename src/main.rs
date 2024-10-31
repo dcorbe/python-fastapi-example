@@ -9,7 +9,7 @@ use serde_json::{Value, json};
 use serde::{Serialize, Deserialize};
 use jsonwebtoken::{encode, Header, EncodingKey};
 use chrono::{Utc, Duration};
-
+use tower_http::cors::CorsLayer;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -22,6 +22,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let app = Router::new()
         .route("/api", post(api))
         .route("/login", post(login))
+        .layer(CorsLayer::permissive()) // FIXME: This is insecure, don't use in production
         .with_state(state);
 
     // This will allow axum to service incoming requests in an infinite loop.
