@@ -22,7 +22,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let app = Router::new()
         .route("/api", post(api))
         .route("/login", post(login))
-        .layer(CorsLayer::permissive()) // FIXME: This is insecure, don't use in production
+        .layer(CorsLayer::permissive()) // FIXME: This is insecure, don't use permissive in production
         .with_state(state);
 
     // This will allow axum to service incoming requests in an infinite loop.
