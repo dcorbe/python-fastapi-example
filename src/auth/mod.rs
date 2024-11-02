@@ -27,6 +27,7 @@ pub struct LoginRequest {
 pub struct LoginResponse {
     token: String,
     token_type: String,
+    token_expires: i64,
 }
 
 
@@ -38,19 +39,32 @@ pub enum Error {
     TokenCreation,
     #[error("Token validation failed")]
     TokenValidation,
+    #[error("Token has expired")]
+    TokenExpired,
+    #[error("Invalid token format")]
+    InvalidTokenFormat,
+
 }
 
 impl From<Error> for (StatusCode, Json<Value>) {
     fn from(error: Error) -> Self {
         let status = match &error {
-            Error::InvalidCredentials => StatusCode::UNAUTHORIZED,
+            Error::InvalidCredentials | Error::TokenExpired => StatusCode::UNAUTHORIZED,
             Error::TokenCreation | Error::TokenValidation => StatusCode::INTERNAL_SERVER_ERROR,
-            _ => StatusCode::INTERNAL_SERVER_ERROR,
+            Error::InvalidTokenFormat => StatusCode::BAD_REQUEST,
         };
-        (status, Json(json!({ "error": error.to_string() })))
+        (status, Json(json!({
+            "error": error.to_string(),
+            "code": match &error {
+                Error::TokenExpired => "token_expired",
+                Error::InvalidCredentials => "invalid_credentials",
+                Error::TokenValidation => "token_invalid",
+                Error::TokenCreation => "token_creation_failed",
+                Error::InvalidTokenFormat => "invalid_format",
+            }
+        })))
     }
 }
-
 
 struct Session {
     state: AppState,
@@ -68,18 +82,19 @@ impl Session {
     pub async fn login(&self, credentials: LoginRequest) -> Result<LoginResponse, Error> {
         // TODO: Replace with actual database lookup and password verification
         if credentials.username == "admin" && credentials.password == "password" {
-            let token = self.create_token(credentials.username)?;
+            let (token, expires_at) = self.create_token(credentials.username)?;
 
             Ok(LoginResponse {
                 token,
                 token_type: "Bearer".to_string(),
+                token_expires: expires_at,
             })
         } else {
             Err(Error::InvalidCredentials)
         }
     }
 
-    pub fn create_token(&self, user_id: String) -> Result<String, Error> {
+    pub fn create_token(&self, user_id: String) -> Result<(String, i64), Error> {
         let now = Utc::now();
         let expires_at = now + Duration::hours(1);
 
@@ -89,24 +104,39 @@ impl Session {
             iat: now.timestamp(),
         };
 
-        encode(
+        let token = encode(
             &Header::default(),
             &claims,
             &EncodingKey::from_secret(self.state.jwt_secret.as_bytes()),
         )
-            .map_err(|_| Error::TokenCreation)
+            .map_err(|_| Error::TokenCreation)?;
+        Ok((token, expires_at.timestamp()))
     }
 
     // Verify a JWT token
     pub fn verify_token(&self, token: &str) -> Result<Claims, Error> {
         let validation = Validation::default();
-        decode::<Claims>(
+        match decode::<Claims>(
             token,
             &DecodingKey::from_secret(self.state.jwt_secret.as_bytes()),
             &validation,
-        )
-            .map(|data| data.claims)
-            .map_err(|_| Error::TokenValidation)
+        ) {
+            Ok(token_data) => {
+                let claims = token_data.claims;
+
+                // Explicit expiration check
+                if claims.exp < Utc::now().timestamp() {
+                    return Err(Error::TokenExpired);
+                }
+
+                Ok(claims)
+            }
+            Err(e) => match e.kind() {
+                jsonwebtoken::errors::ErrorKind::ExpiredSignature => Err(Error::TokenExpired),
+                jsonwebtoken::errors::ErrorKind::InvalidToken => Err(Error::InvalidTokenFormat),
+                _ => Err(Error::TokenValidation)
+            }
+        }
     }
 }
 
