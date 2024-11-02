@@ -69,6 +69,10 @@ pub enum Error {
     TokenRevoked,
     #[error("State error: {0}")]
     StateError(String),
+    #[error("Missing authorization header")]
+    MissingAuthorizationHeader,
+    #[error("Invalid authorization header format")]
+    InvalidAuthorizationHeader,
 }
 
 impl From<Error> for (StatusCode, Json<Value>) {
@@ -79,6 +83,8 @@ impl From<Error> for (StatusCode, Json<Value>) {
             Error::InvalidTokenFormat => StatusCode::BAD_REQUEST,
             Error::TokenRevoked => StatusCode::FORBIDDEN,
             Error::StateError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Error::MissingAuthorizationHeader => StatusCode::UNAUTHORIZED,
+            Error::InvalidAuthorizationHeader => StatusCode::BAD_REQUEST,
         };
         (status, Json(json!({
             "error": error.to_string(),
@@ -90,6 +96,8 @@ impl From<Error> for (StatusCode, Json<Value>) {
                 Error::InvalidTokenFormat => "invalid_format",
                 Error::TokenRevoked => "token_revoked",
                 Error::StateError(_) => "state_error",
+                Error::MissingAuthorizationHeader => "missing_authorization_header",
+                Error::InvalidAuthorizationHeader => "invalid_authorization_header",
             }
         })))
     }
@@ -184,17 +192,11 @@ impl Session {
             .headers()
             .get(AUTHORIZATION)
             .and_then(|header| header.to_str().ok())
-            .ok_or_else(|| (
-                StatusCode::UNAUTHORIZED,
-                Json(json!({ "error": "Missing authorization header" }))
-            ))?;
+            .ok_or(Error::MissingAuthorizationHeader)?;
 
         // 2. Validate the header format
         if !auth_header.starts_with("Bearer ") {
-            return Err((
-                StatusCode::UNAUTHORIZED,
-                Json(json!({ "error": "Invalid authorization header format" }))
-            ));
+            return Err(Error::InvalidAuthorizationHeader.into());
         }
 
         // 3. Extract and verify the token
