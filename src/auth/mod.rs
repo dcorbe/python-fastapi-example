@@ -1,7 +1,7 @@
 use axum::body::Body;
 use axum::extract::State;
 use axum::http::{Request, Response, StatusCode, header::AUTHORIZATION};
-use axum::Json;
+use axum::{Extension, Json};
 use axum::middleware::Next;
 use chrono::{Duration, Utc};
 use jsonwebtoken::{encode, decode, EncodingKey, DecodingKey, Header, Validation};
@@ -170,6 +170,36 @@ impl Session {
         }
     }
 
+    pub fn decode_token(&self, req: &Request<Body>) -> Result<(String, Claims), (StatusCode, Json<Value>)> {
+        // 1. Extract the Authorization header
+        let auth_header = req
+            .headers()
+            .get(AUTHORIZATION)
+            .and_then(|header| header.to_str().ok())
+            .ok_or_else(|| (
+                StatusCode::UNAUTHORIZED,
+                Json(json!({ "error": "Missing authorization header" }))
+            ))?;
+
+        // 2. Validate the header format
+        if !auth_header.starts_with("Bearer ") {
+            return Err((
+                StatusCode::UNAUTHORIZED,
+                Json(json!({ "error": "Invalid authorization header format" }))
+            ));
+        }
+
+        // 3. Extract and verify the token
+        let token = &auth_header[7..];
+        let claims = self.verify_token(token)
+            .map_err(|e: Error| { // Explicitly handle the error conversion
+                let (status, json) = e.into();
+                (status, json)
+            })?;
+
+        Ok((token.to_string(), claims))
+    }
+
     pub fn invalidate_token(&self, token: &str) -> Result<(), Error> {
         let claims = self.verify_token(token)?;
         let mut blacklist = self.state.token_blacklist.lock().unwrap();
@@ -199,27 +229,12 @@ pub async fn handle_logout(
     State(state): State<AppState>,
     req: Request<Body>,
 ) -> Result<Json<LogoutResponse>, (StatusCode, Json<Value>)> {
-    let auth_header = req
-        .headers()
-        .get(AUTHORIZATION)
-        .and_then(|header| header.to_str().ok())
-        .ok_or_else(|| (
-            StatusCode::UNAUTHORIZED,
-            Json(json!({ "error": "Missing authorization header" }))
-        ))?;
-
-    if !auth_header.starts_with("Bearer ") {
-        return Err((
-            StatusCode::UNAUTHORIZED,
-            Json(json!({ "error": "Invalid authorization header format" }))
-        ));
-    }
-
-    let token = &auth_header[7..];
     let session = Session::new(state);
+    let (token, _claims) = session.decode_token(&req)
+        .map_err(|e| e)?;
 
     // Invalidate the token
-    session.invalidate_token(token)
+    session.invalidate_token(&token)
         .map_err(|e: Error| {
             let (status, json) = e.into();
             (status, json)
@@ -238,36 +253,12 @@ pub async fn auth_middleware(
     mut req: Request<Body>,
     next: Next,
 ) -> Result<Response<Body>, (StatusCode, Json<Value>)> {
-    // 1. Extract the Authorization header
-    let auth_header = req
-        .headers()
-        .get(AUTHORIZATION)
-        .and_then(|header| header.to_str().ok())
-        .ok_or_else(|| (
-            StatusCode::UNAUTHORIZED,
-            Json(json!({ "error": "Missing authorization header" }))
-        ))?;
-
-    // 2. Validate the header format
-    if !auth_header.starts_with("Bearer ") {
-        return Err((
-            StatusCode::UNAUTHORIZED,
-            Json(json!({ "error": "Invalid authorization header format" }))
-        ));
-    }
-
-    // 3. Extract and verify the token
-    let token = &auth_header[7..];
     let session = Session::new(state);
-    let claims = session.verify_token(token)
-        .map_err(|e: Error| { // Explicitly handle the error conversion
-            let (status, json) = e.into();
-            (status, json)
-        })?;
+    let (_token, claims) = session.decode_token(&req)?;
 
-    // 4. Store the verified claims for the route handler
+    // Store the verified claims for the route handler
     req.extensions_mut().insert(claims);
 
-    // 5. Continue to the route handler
+    // Continue to the route handler
     Ok(next.run(req).await)
 }
