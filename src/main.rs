@@ -18,7 +18,7 @@ use auth::{Claims, handle_login};
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     //TODO: Here is where you'll either want to load or generate a secret key for JWT.
     let state = AppState {
-        jwt_secret: "your-secret-key-here".to_string(), // In production, load from env
+        jwt_secret: Arc::new("your-secret-key-here".to_string()), // In production, load from env
     };
 
     let public_routes = Router::new()
@@ -67,5 +67,5 @@ async fn api(
 // WARNING: This is sensitive information.
 #[derive(Clone)]
 struct AppState {
-    jwt_secret: String,
+    jwt_secret: Arc<String>,
 }
