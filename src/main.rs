@@ -13,6 +13,7 @@ use std::sync::{Arc};
 
 use bss_backend::auth::{Claims, handle_login, handle_logout};
 use bss_backend::state::AppState;
+use bss_backend::ping::handle_ping;
 
 
 #[tokio::main]
@@ -27,6 +28,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let protected_routes = Router::new()
         .route("/api", post(api))
+        .route("/ping", post(handle_ping))
         .layer(from_fn_with_state(
             state.clone(),
             bss_backend::auth::middleware,
