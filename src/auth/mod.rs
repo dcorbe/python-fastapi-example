@@ -48,6 +48,10 @@ pub struct LoginResponse {
     token_expires: i64,
 }
 
+#[derive(Serialize)]
+pub struct LogoutResponse {
+    message: String,
+}
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -61,7 +65,8 @@ pub enum Error {
     TokenExpired,
     #[error("Invalid token format")]
     InvalidTokenFormat,
-
+    #[error("Token has been revoked")]
+    TokenRevoked,
 }
 
 impl From<Error> for (StatusCode, Json<Value>) {
@@ -70,6 +75,7 @@ impl From<Error> for (StatusCode, Json<Value>) {
             Error::InvalidCredentials | Error::TokenExpired => StatusCode::UNAUTHORIZED,
             Error::TokenCreation | Error::TokenValidation => StatusCode::INTERNAL_SERVER_ERROR,
             Error::InvalidTokenFormat => StatusCode::BAD_REQUEST,
+            Error::TokenRevoked => StatusCode::FORBIDDEN,
         };
         (status, Json(json!({
             "error": error.to_string(),
@@ -79,6 +85,7 @@ impl From<Error> for (StatusCode, Json<Value>) {
                 Error::TokenValidation => "token_invalid",
                 Error::TokenCreation => "token_creation_failed",
                 Error::InvalidTokenFormat => "invalid_format",
+                Error::TokenRevoked => "token_revoked",
             }
         })))
     }
@@ -133,6 +140,12 @@ impl Session {
 
     // Verify a JWT token
     pub fn verify_token(&self, token: &str) -> Result<Claims, Error> {
+        // Step 1: Check if the token is blacklisted
+        let blacklist = self.state.token_blacklist.lock().unwrap();
+        if blacklist.contains_key(token) {
+            return Err(Error::TokenRevoked);
+        }
+
         let validation = Validation::default();
         match decode::<Claims>(
             token,
@@ -156,6 +169,19 @@ impl Session {
             }
         }
     }
+
+    pub fn invalidate_token(&self, token: &str) -> Result<(), Error> {
+        let claims = self.verify_token(token)?;
+        let mut blacklist = self.state.token_blacklist.lock().unwrap();
+        blacklist.insert(token.to_string(), claims.exp);
+        Ok(())
+    }
+
+    pub fn cleanup_blacklist(&self) {
+        let mut blacklist = self.state.token_blacklist.lock().unwrap();
+        let mut now = Utc::now().timestamp();
+        blacklist.retain(|_, exp| exp > &mut now);
+    }
 }
 
 pub async fn handle_login(
@@ -167,6 +193,44 @@ pub async fn handle_login(
         .await
         .map(Json)
         .map_err(Into::into)
+}
+
+pub async fn handle_logout(
+    State(state): State<AppState>,
+    req: Request<Body>,
+) -> Result<Json<LogoutResponse>, (StatusCode, Json<Value>)> {
+    let auth_header = req
+        .headers()
+        .get(AUTHORIZATION)
+        .and_then(|header| header.to_str().ok())
+        .ok_or_else(|| (
+            StatusCode::UNAUTHORIZED,
+            Json(json!({ "error": "Missing authorization header" }))
+        ))?;
+
+    if !auth_header.starts_with("Bearer ") {
+        return Err((
+            StatusCode::UNAUTHORIZED,
+            Json(json!({ "error": "Invalid authorization header format" }))
+        ));
+    }
+
+    let token = &auth_header[7..];
+    let session = Session::new(state);
+
+    // Invalidate the token
+    session.invalidate_token(token)
+        .map_err(|e: Error| {
+            let (status, json) = e.into();
+            (status, json)
+        })?;
+
+    // Clean up expired tokens while we're here
+    session.cleanup_blacklist();
+
+    Ok(Json(LogoutResponse {
+        message: "Successfully logged out".to_string(),
+    }))
 }
 
 pub async fn auth_middleware(

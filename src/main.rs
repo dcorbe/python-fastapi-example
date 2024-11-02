@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use axum::{
     routing::{post, get},
     Router,
@@ -9,20 +11,22 @@ use axum::middleware::from_fn_with_state;
 use serde_json::{Value, json};
 use serde::{Serialize, Deserialize};
 use tower_http::cors::CorsLayer;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 mod auth;
-use auth::{Claims, handle_login};
+use auth::{Claims, handle_login, handle_logout};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     //TODO: Here is where you'll either want to load or generate a secret key for JWT.
     let state = AppState {
-        jwt_secret: Arc::new("your-secret-key-here".to_string()), // In production, load from env
+        jwt_secret: Arc::new("your-secret-key-here".to_string()), // FIXME: In production, load from env
+        token_blacklist: Arc::new(Mutex::new(HashMap::new())),
     };
 
     let public_routes = Router::new()
-        .route("/login", post(handle_login));
+        .route("/login", post(handle_login))
+        .route("/logout", get(handle_logout));
 
     let protected_routes = Router::new()
         .route("/api", post(api))
@@ -68,4 +72,5 @@ async fn api(
 #[derive(Clone)]
 struct AppState {
     jwt_secret: Arc<String>,
+    token_blacklist: Arc<Mutex<HashMap<String, i64>>>,
 }
