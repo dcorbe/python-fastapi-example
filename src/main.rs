@@ -10,6 +10,9 @@ use serde::{Serialize, Deserialize};
 use jsonwebtoken::{encode, Header, EncodingKey};
 use chrono::{Utc, Duration};
 use tower_http::cors::CorsLayer;
+use std::sync::Arc;
+
+mod auth;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -21,7 +24,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // This maps incoming URLs to the functions that will handle them.
     let app = Router::new()
         .route("/api", post(api))
-        .route("/login", post(login))
+        .route("/login", post(auth::login))
         .layer(CorsLayer::permissive()) // FIXME: This is insecure, don't use permissive in production
         .with_state(state);
 
@@ -44,65 +47,9 @@ async fn api(Json(body): Json<Value>) -> Json<Testing> {
     Json(response)
 }
 
-// This is a JWT claim.
-#[derive(Debug, Serialize, Deserialize)]
-struct Claims {
-    sub: String,     // Subject (user ID)
-    exp: i64,        // Expiration time
-    iat: i64,        // Issued at time
-}
-
 // This application needs to keep a JWT secret key.
 // WARNING: This is sensitive information.
 #[derive(Clone)]
 struct AppState {
     jwt_secret: String,
-}
-
-#[derive(Deserialize)]
-struct LoginRequest {
-    username: String,
-    password: String,
-}
-
-#[derive(Serialize)]
-struct LoginResponse {
-    token: String,
-    token_type: String,
-}
-async fn login(
-    State(state): State<AppState>,
-    Json(login_req): Json<LoginRequest>
-) -> Result<Json<LoginResponse>, (StatusCode, Json<Value>)> {
-    // TODO: This would be a great place to start doing DB work.
-    if login_req.username == "admin" && login_req.password == "password" {
-        let now = Utc::now();
-        let expires_at = now + Duration::hours(1);
-
-        let claims = Claims {
-            sub: login_req.username,
-            exp: expires_at.timestamp(),
-            iat: now.timestamp(),
-        };
-
-        // Generate the token
-        let token = encode(
-            &Header::default(),
-            &claims,
-            &EncodingKey::from_secret(state.jwt_secret.as_ref())
-        ).map_err(|_| (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(json!({ "error": "Failed to create token" }))
-        ))?;
-
-        Ok(Json(LoginResponse {
-            token,
-            token_type: "Bearer".to_string(),
-        }))
-    } else {
-        Err((
-            StatusCode::UNAUTHORIZED,
-            Json(json!({ "error": "Invalid credentials" }))
-        ))
-    }
 }
