@@ -11,10 +11,28 @@ use crate::AppState;
 
 // This is a JWT claim.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-struct Claims {
+pub struct Claims {
     sub: String,     // Subject (user ID)
     exp: i64,        // Expiration time
     iat: i64,        // Issued at time
+}
+
+impl Claims {
+    pub fn new(sub: String, exp: i64, iat: i64) -> Self {
+        Self { sub, exp, iat }
+    }
+
+    pub fn sub(&self) -> &str {
+        &self.sub
+    }
+
+    pub fn exp(&self) -> i64 {
+        self.exp
+    }
+
+    pub fn iat(&self) -> i64 {
+        self.iat
+    }
 }
 
 #[derive(Deserialize, Debug)]

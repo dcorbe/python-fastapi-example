@@ -2,7 +2,9 @@ use axum::{
     routing::{post, get},
     Router,
     response::Json,
+    extract::Extension,
 };
+
 use axum::middleware::from_fn_with_state;
 use serde_json::{Value, json};
 use serde::{Serialize, Deserialize};
@@ -10,6 +12,7 @@ use tower_http::cors::CorsLayer;
 use std::sync::Arc;
 
 mod auth;
+use auth::{Claims, handle_login};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -19,7 +22,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     let public_routes = Router::new()
-        .route("/login", post(auth::handle_login));
+        .route("/login", post(handle_login));
 
     let protected_routes = Router::new()
         .route("/api", post(api))
@@ -44,12 +47,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 #[derive(Serialize)]
 struct Testing {
     name: String,
+    user: String,
 }
 
-async fn api(Json(body): Json<Value>) -> Json<Testing> {
+// This is an example of a protected endpoint
+async fn api(
+    Extension(claims): Extension<Claims>,
+    Json(body): Json<Value>,
+) -> Json<Testing> {
     let name = body["name"].as_str().unwrap();
     let response = Testing {
         name: name.to_string(),
+        user: claims.sub().to_string(),
     };
     Json(response)
 }
