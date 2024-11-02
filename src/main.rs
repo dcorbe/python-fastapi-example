@@ -5,6 +5,7 @@ use axum::{
     http::StatusCode,
     extract::State,
 };
+use axum::middleware::from_fn_with_state;
 use serde_json::{Value, json};
 use serde::{Serialize, Deserialize};
 use jsonwebtoken::{encode, Header, EncodingKey};
@@ -21,10 +22,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         jwt_secret: "your-secret-key-here".to_string(), // In production, load from env
     };
 
+    let public_routes = Router::new()
+        .route("/login", post(auth::handle_login));
+
+    let protected_routes = Router::new()
+        .route("/api", post(api))
+        .layer(from_fn_with_state(
+            state.clone(),
+            auth::auth_middleware,
+        ));
+
     // This maps incoming URLs to the functions that will handle them.
     let app = Router::new()
-        .route("/api", post(api))
-        .route("/login", post(auth::handle_login))
+        .merge(public_routes)
+        .merge(protected_routes)
         .layer(CorsLayer::permissive()) // FIXME: This is insecure, don't use permissive in production
         .with_state(state);
 

@@ -1,6 +1,8 @@
+use axum::body::Body;
 use axum::extract::State;
-use axum::http::StatusCode;
+use axum::http::{Request, Response, StatusCode, header::AUTHORIZATION};
 use axum::Json;
+use axum::middleware::Next;
 use chrono::{Duration, Utc};
 use jsonwebtoken::{encode, decode, EncodingKey, DecodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
@@ -8,7 +10,7 @@ use serde_json::{json, Value};
 use crate::AppState;
 
 // This is a JWT claim.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct Claims {
     sub: String,     // Subject (user ID)
     exp: i64,        // Expiration time
@@ -117,4 +119,43 @@ pub async fn handle_login(
         .await
         .map(Json)
         .map_err(Into::into)
+}
+
+pub async fn auth_middleware(
+    State(state): State<AppState>,
+    mut req: Request<Body>,
+    next: Next,
+) -> Result<Response<Body>, (StatusCode, Json<Value>)> {
+    // 1. Extract the Authorization header
+    let auth_header = req
+        .headers()
+        .get(AUTHORIZATION)
+        .and_then(|header| header.to_str().ok())
+        .ok_or_else(|| (
+            StatusCode::UNAUTHORIZED,
+            Json(json!({ "error": "Missing authorization header" }))
+        ))?;
+
+    // 2. Validate the header format
+    if !auth_header.starts_with("Bearer ") {
+        return Err((
+            StatusCode::UNAUTHORIZED,
+            Json(json!({ "error": "Invalid authorization header format" }))
+        ));
+    }
+
+    // 3. Extract and verify the token
+    let token = &auth_header[7..];
+    let session = Session::new(state);
+    let claims = session.verify_token(token)
+        .map_err(|e: Error| { // Explicitly handle the error conversion
+            let (status, json) = e.into();
+            (status, json)
+        })?;
+
+    // 4. Store the verified claims for the route handler
+    req.extensions_mut().insert(claims);
+
+    // 5. Continue to the route handler
+    Ok(next.run(req).await)
 }
