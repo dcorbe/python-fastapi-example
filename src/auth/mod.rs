@@ -7,7 +7,7 @@ use chrono::{Duration, Utc};
 use jsonwebtoken::{encode, decode, EncodingKey, DecodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use crate::AppState;
+use crate::state::AppState;
 
 // This is a JWT claim.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -248,7 +248,7 @@ pub async fn handle_logout(
     }))
 }
 
-pub async fn auth_middleware(
+pub async fn middleware(
     State(state): State<AppState>,
     mut req: Request<Body>,
     next: Next,

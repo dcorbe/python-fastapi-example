@@ -13,8 +13,9 @@ use serde::{Serialize, Deserialize};
 use tower_http::cors::CorsLayer;
 use std::sync::{Arc, Mutex};
 
-mod auth;
-use auth::{Claims, handle_login, handle_logout};
+use bss_backend::auth::{Claims, handle_login, handle_logout};
+use bss_backend::state::AppState;
+
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -32,7 +33,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/api", post(api))
         .layer(from_fn_with_state(
             state.clone(),
-            auth::auth_middleware,
+            bss_backend::auth::middleware,
         ));
 
     // This maps incoming URLs to the functions that will handle them.
@@ -59,18 +60,10 @@ async fn api(
     Extension(claims): Extension<Claims>,
     Json(body): Json<Value>,
 ) -> Json<Testing> {
-    let name = body["name"].as_str().unwrap();
+    let name = body["name"].as_str().unwrap();  // FIXME: This WILL panic if the key is missing
     let response = Testing {
         name: name.to_string(),
         user: claims.sub().to_string(),
     };
     Json(response)
-}
-
-// This application needs to keep a JWT secret key.
-// WARNING: This is sensitive information.
-#[derive(Clone)]
-struct AppState {
-    jwt_secret: Arc<String>,
-    token_blacklist: Arc<Mutex<HashMap<String, i64>>>,
 }
