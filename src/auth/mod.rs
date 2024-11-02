@@ -67,6 +67,8 @@ pub enum Error {
     InvalidTokenFormat,
     #[error("Token has been revoked")]
     TokenRevoked,
+    #[error("State error: {0}")]
+    StateError(String),
 }
 
 impl From<Error> for (StatusCode, Json<Value>) {
@@ -76,6 +78,7 @@ impl From<Error> for (StatusCode, Json<Value>) {
             Error::TokenCreation | Error::TokenValidation => StatusCode::INTERNAL_SERVER_ERROR,
             Error::InvalidTokenFormat => StatusCode::BAD_REQUEST,
             Error::TokenRevoked => StatusCode::FORBIDDEN,
+            Error::StateError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         };
         (status, Json(json!({
             "error": error.to_string(),
@@ -86,6 +89,7 @@ impl From<Error> for (StatusCode, Json<Value>) {
                 Error::TokenCreation => "token_creation_failed",
                 Error::InvalidTokenFormat => "invalid_format",
                 Error::TokenRevoked => "token_revoked",
+                Error::StateError(_) => "state_error",
             }
         })))
     }
@@ -132,7 +136,9 @@ impl Session {
         let token = encode(
             &Header::default(),
             &claims,
-            &EncodingKey::from_secret(self.state.jwt_secret.as_bytes()),
+            &EncodingKey::from_secret(self.state.jwt_secret()
+                .map_err(|e| Error::TokenCreation)?
+                .as_bytes()),
         )
             .map_err(|_| Error::TokenCreation)?;
         Ok((token, expires_at.timestamp()))
@@ -141,7 +147,7 @@ impl Session {
     // Verify a JWT token
     pub fn verify_token(&self, token: &str) -> Result<Claims, Error> {
         // Step 1: Check if the token is blacklisted
-        let blacklist = self.state.token_blacklist.lock().unwrap();
+        let blacklist = self.state.token_blacklist().lock().unwrap();
         if blacklist.contains_key(token) {
             return Err(Error::TokenRevoked);
         }
@@ -149,7 +155,9 @@ impl Session {
         let validation = Validation::default();
         match decode::<Claims>(
             token,
-            &DecodingKey::from_secret(self.state.jwt_secret.as_bytes()),
+            &DecodingKey::from_secret(self.state.jwt_secret()
+                .map_err(|e| Error::StateError(e.to_string()))?
+                .as_bytes()),
             &validation,
         ) {
             Ok(token_data) => {
@@ -202,13 +210,13 @@ impl Session {
 
     pub fn invalidate_token(&self, token: &str) -> Result<(), Error> {
         let claims = self.verify_token(token)?;
-        let mut blacklist = self.state.token_blacklist.lock().unwrap();
+        let mut blacklist = self.state.token_blacklist().lock().unwrap();
         blacklist.insert(token.to_string(), claims.exp);
         Ok(())
     }
 
     pub fn cleanup_blacklist(&self) {
-        let mut blacklist = self.state.token_blacklist.lock().unwrap();
+        let mut blacklist = self.state.token_blacklist().lock().unwrap();
         let mut now = Utc::now().timestamp();
         blacklist.retain(|_, exp| exp > &mut now);
     }

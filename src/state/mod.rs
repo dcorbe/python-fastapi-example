@@ -5,23 +5,38 @@ use std::sync::{Arc, Mutex};
 // WARNING: This is sensitive information.
 #[derive(Clone)]
 pub struct AppState {
-    pub jwt_secret: Arc<String>,
-    pub token_blacklist: Arc<Mutex<HashMap<String, i64>>>,
+    jwt_secret: Option<Arc<String>>,
+    token_blacklist: Arc<Mutex<HashMap<String, i64>>>,
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error("JWT secret is required")]
+    MissingJwtSecret,
+}
+
+
 impl AppState {
-    pub fn new(jwt_secret: String) -> Self {
+    pub fn new() -> Self {
         Self {
-            jwt_secret: Arc::new(jwt_secret),
+            jwt_secret: None,
             token_blacklist: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 
-    pub fn jwt_secret(&self) -> &str {
-        &self.jwt_secret
+    pub fn with_jwt_secret(mut self, jwt_secret: Arc<String>) -> Self {
+        self.jwt_secret = Some(jwt_secret);
+        self
     }
 
-    pub fn token_blacklist(&self) -> &Mutex<HashMap<String, i64>> {
+    pub fn jwt_secret(&self) -> Result<&Arc<String>, Error> {
+        match &self.jwt_secret {
+            Some(secret) => Ok(secret),
+            None => Err(Error::MissingJwtSecret),
+        }
+    }
+
+    pub fn token_blacklist(&self) -> &Arc<Mutex<HashMap<String, i64>>> {
         &self.token_blacklist
     }
 }
