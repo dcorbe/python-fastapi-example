@@ -24,7 +24,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // This maps incoming URLs to the functions that will handle them.
     let app = Router::new()
         .route("/api", post(api))
-        .route("/login", post(auth::login))
+        .route("/login", post(auth::handle_login))
         .layer(CorsLayer::permissive()) // FIXME: This is insecure, don't use permissive in production
         .with_state(state);
 

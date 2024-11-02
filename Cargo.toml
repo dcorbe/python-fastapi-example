@@ -11,3 +11,4 @@ serde = { version = "1.0.214", features = ["derive"] }
 jsonwebtoken = "*"
 chrono = "*"
 tower-http = { version = "*", features = ["cors"] }
+thiserror = "1.0.65"
