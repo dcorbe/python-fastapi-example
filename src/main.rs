@@ -2,14 +2,10 @@ use axum::{
     routing::{post, get},
     Router,
     response::Json,
-    http::StatusCode,
-    extract::State,
 };
 use axum::middleware::from_fn_with_state;
 use serde_json::{Value, json};
 use serde::{Serialize, Deserialize};
-use jsonwebtoken::{encode, Header, EncodingKey};
-use chrono::{Utc, Duration};
 use tower_http::cors::CorsLayer;
 use std::sync::Arc;
 
