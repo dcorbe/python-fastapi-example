@@ -1,3 +1,4 @@
+use std::env;
 use axum::{
     routing::{post, get},
     Router,
@@ -21,6 +22,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let state = AppState::new()
         .with_jwt_secret(Arc::new(
             env::var("JWT_SECRET").expect("JWT_SECRET must be set")))
+        .with_db_uri(
+            env::var("DATABASE_URL").expect("DATABASE_URL must be set"))
+        .await?;
 
     let public_routes = Router::new()
         .route("/login", post(handle_login))

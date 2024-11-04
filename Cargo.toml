@@ -12,3 +12,4 @@ jsonwebtoken = "*"
 chrono = "*"
 tower-http = { version = "*", features = ["cors"] }
 thiserror = "1.0.65"
+sqlx = { version = "*", features = ["postgres", "runtime-tokio-native-tls", "chrono", "uuid"] }
