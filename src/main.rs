@@ -18,9 +18,9 @@ use bss_backend::ping::handle_ping;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    //TODO: Here is where you'll either want to load or generate a secret key for JWT.
     let state = AppState::new()
-        .with_jwt_secret(Arc::new("put-secret-key-here".to_string())); // FIXME: Pull secret from environment variable
+        .with_jwt_secret(Arc::new(
+            env::var("JWT_SECRET").expect("JWT_SECRET must be set")))
 
     let public_routes = Router::new()
         .route("/login", post(handle_login))
