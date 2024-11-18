@@ -1,9 +1,22 @@
 This is a simple example of what a "Back End" service might look like in the Rust programming language.
 
-Right now it:
-1) services a /login endpoint that returns a JWT token
+Right now it services a /login endpoint that returns a JWT token
 
-Start the service with cargo:
+To run this project:
+
+1) Customize the .env file to your liking then run the following command:
+$ . .env
+
+2) Start the database server
+$ docker-compose up -d
+
+3) Run database migrations
+$ cargo sqlx migrate run
+
+4) Prepare the database server
+$ cargo sqlx prepare
+
+5) Run the API server
 $ cargo run
 
 You can use HTTPie (https://httpie.io/) to test it out:

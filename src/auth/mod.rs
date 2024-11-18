@@ -9,6 +9,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use crate::state::AppState;
 
+use crate::user::{User, UserLookup};
+
 // This is a JWT claim.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Claims {
@@ -103,6 +105,17 @@ impl From<Error> for (StatusCode, Json<Value>) {
     }
 }
 
+impl From<crate::user::Error> for Error {
+    fn from(err: crate::user::Error) -> Self {
+        match err {
+            crate::user::Error::UserNotFound => Error::InvalidCredentials,
+            crate::user::Error::DatabaseError(_) => Error::StateError(err.to_string()),
+            _ => Error::StateError(format!("Unhandled user error: {}", err)),
+        }
+    }
+}
+
+
 struct Session {
     state: AppState,
     claim: Option<Claims>
@@ -117,8 +130,15 @@ impl Session {
     }
 
     pub async fn login(&self, credentials: LoginRequest) -> Result<LoginResponse, Error> {
-        // TODO: Replace with actual database lookup and password verification
-        if credentials.username == "admin" && credentials.password == "password" {
+        let user = User::find_user(
+            UserLookup::ByEmail(credentials.username.clone()),
+            State(self.state.clone())
+        ).await?;
+
+        let email = user.email()?; // Handle the `Result` here
+        let password_hash = user.password_hash()?; // Handle the `Result` here
+
+        if credentials.username == email && credentials.password == password_hash {
             let (token, expires_at) = self.create_token(credentials.username)?;
 
             Ok(LoginResponse {

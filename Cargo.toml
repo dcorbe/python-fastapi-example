@@ -13,3 +13,6 @@ chrono = "*"
 tower-http = { version = "*", features = ["cors"] }
 thiserror = "1.0.65"
 sqlx = { version = "*", features = ["postgres", "runtime-tokio-native-tls", "chrono", "uuid"] }
+uuid = { version = "1.11.0", features = ["v4"] }
+validator = { version = "*", features = ["derive"]}
+regex = "*"
