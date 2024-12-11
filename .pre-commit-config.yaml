@@ -9,7 +9,7 @@
 #
 # By default, pre-commit tries to optimize performance by running hooks in parallel when possible. While this works well
 # for simple hooks like code formatters that operate on individual files independently, it can cause issues with tools
-#that need to understand the entire codebase as a single unit.
+# that need to understand the entire codebase as a single unit.
 #
 # In Particular, If you removed require_serial: true, you might occasionally see:
 #

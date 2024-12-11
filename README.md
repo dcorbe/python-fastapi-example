@@ -22,12 +22,12 @@ poetry shell
 pip install pre-commit
 ```
 
-4. Install dependencies:
+5. Install dependencies:
 ```bash
 poetry install
 ```
 
-4. Install pre-commit hooks:
+6. Install pre-commit hooks:
 ```bash
 pre-commit install
 ```
@@ -36,7 +36,6 @@ pre-commit install
 
 The project uses mypy for static type checking. Type checking is enforced through:
 - Pre-commit hooks (runs on git commit)
-- GitHub Actions (runs on push to main and pull requests)
 
 To run type checking manually:
 ```bash
