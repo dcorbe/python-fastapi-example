@@ -1,0 +1,32 @@
+# require_serial: true in pre-commit configurations means that the hook must be run sequentially (one at a time) rather
+# than in parallel with other hooks.
+#
+# This is particularly important for tools like mypy because:
+#
+# Mypy performs whole-project type checking and needs to analyze dependencies between files
+# Running multiple instances of mypy simultaneously could lead to race conditions or inconsistent results
+# Mypy maintains a cache of analysis results, and parallel runs might interfere with this cache
+#
+# By default, pre-commit tries to optimize performance by running hooks in parallel when possible. While this works well
+# for simple hooks like code formatters that operate on individual files independently, it can cause issues with tools
+# that need to understand the entire codebase as a single unit.
+#
+# In Particular, If you removed require_serial: true, you might occasionally see:
+#
+# Inconsistent type checking results
+# Cache corruption
+# Memory usage spikes from multiple mypy processes
+# Race conditions when multiple instances try to write to the cache
+#
+# That's why it's recommended to keep require_serial: true for mypy hooks, even though it might make the pre-commit
+# checks run slightly slower.
+#
+repos:
+-   repo: local
+    hooks:
+    -   id: mypy
+        name: mypy
+        entry: poetry run mypy
+        language: system
+        types: [python]
+        require_serial: true

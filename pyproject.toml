@@ -1,0 +1,40 @@
+[tool.poetry]
+name = "bss-lib"
+version = "0.1.0"
+description = "BSS common library"
+authors = ["BSS <engineering@bridgesecuritysolutions.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+opencv-python = "^4.10.0.84"
+numpy = "^2.2.0"
+pydantic = "^2.10.4"
+
+[tool.poetry.group.dev.dependencies]
+pyyaml = "^6.0.2"
+mypy = "^1.13.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.mypy]
+python_version = "3.12"
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_return_any = true
+warn_unreachable = true
+strict_optional = true
+strict_equality = true
+plugins = ["pydantic.mypy"]
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
