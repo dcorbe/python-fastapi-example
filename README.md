@@ -21,7 +21,13 @@ application that does the following:
 - [Implement Refresh Tokens (CAD-22)](https://bridgesecuritysolutions.atlassian.net/browse/CAD-22)
 - [User Management API (CAD-24)](https://bridgesecuritysolutions.atlassian.net/browse/CAD-24)
 - [Group Management API (CAD-25)](https://bridgesecuritysolutions.atlassian.net/browse/CAD-25)
-- 
+- [User management (CAD-24)](https://bridgesecuritysolutions.atlassian.net/browse/CAD-24)
+- [Group management (CAD-26)](https://bridgesecuritysolutions.atlassian.net/browse/CAD-26)
+- [Org management (CAD-27)](https://bridgesecuritysolutions.atlassian.net/browse/CAD-27)
+- [Admin API (CAD-28)](https://bridgesecuritysolutions.atlassian.net/browse/CAD-28)
+- [Camera API (CAD-32)](https://bridgesecuritysolutions.atlassian.net/browse/CAD-32)
+- [Cammera Logging/Audit (CAD-33)](https://bridgesecuritysolutions.atlassian.net/browse/CAD-33)
+- [Dockerize Backend (CAD-37)](https://bridgesecuritysolutions.atlassian.net/browse/CAD-37)
 
 ## Setting Up A Development Environment (MacOS)
 1. Install Python 3.12:
