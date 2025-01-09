@@ -71,5 +71,3 @@ class Database:
             await self.cur.close()
         if hasattr(self, "conn") and self.conn is not None:
             await self.conn.close()
-
-
