@@ -30,3 +30,10 @@ warn_return_any = true
 warn_unreachable = true
 strict_optional = true
 strict_equality = true
+disallow_umtyped_calls = true
+plugins = ["pydantic.mypy"]
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
