@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from auth import router as auth_router
 from example import router as example_router
+from api.v1 import router as api_v1_router
 from database import Database
 import database_manager
 
@@ -31,6 +32,7 @@ async def shutdown() -> None:
 
 app.include_router(auth_router)
 app.include_router(example_router)
+app.include_router(api_v1_router)
 
 @app.get("/")
 async def hello() -> Dict[str, str]:
