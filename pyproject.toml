@@ -4,6 +4,9 @@ version = "0.1.0"
 description = "Bridge Security Solutions back-end"
 authors = ["Bridge Security Solutions <support@bridgesecuritysolutions.com>"]
 readme = "README.md"
+packages = [
+    { include = "example" },
+]
 
 [tool.poetry.dependencies]
 python = "^3.12"
