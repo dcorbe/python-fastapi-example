@@ -5,6 +5,7 @@ description = "Bridge Security Solutions back-end"
 authors = ["Bridge Security Solutions <support@bridgesecuritysolutions.com>"]
 readme = "README.md"
 packages = [
+    { include = "auth" },
     { include = "example" },
 ]
 
@@ -15,6 +16,10 @@ opencv-python = "^4.10.0.84"
 pydantic = "^2.10.5"
 psycopg = "^3.2.3"
 email-validator = "^2.2.0"
+bss-lib = {path = "../bss-lib"}
+fastapi = {extras = ["standard"], version = "^0.115.6"}
+pyjwt = {extras = ["crypto"], version = "^2.10.1"}
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
 
 [tool.poetry.group.dev.dependencies]
 pyaml = "^25.1.0"
@@ -45,3 +50,7 @@ plugins = ["pydantic.mypy"]
 init_forbid_extra = true
 init_typed = true
 warn_required_dynamic_aliases = true
+
+[[tool.mypy.overrides]]
+module = ["database.*", "user.*"]
+ignore_missing_imports = true
