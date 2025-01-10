@@ -4,6 +4,10 @@ version = "0.1.0"
 description = "BSS common library"
 authors = ["BSS <engineering@bridgesecuritysolutions.com>"]
 readme = "README.md"
+packages = [
+    { include = "user" },
+    { include = "database" },
+]
 
 [tool.poetry.dependencies]
 python = "^3.12"
