@@ -96,3 +96,4 @@ poetry run mypy .
 - [Camera API (CAD-32)](https://bridgesecuritysolutions.atlassian.net/browse/CAD-32)
 - [Camera Logging/Audit (CAD-33)](https://bridgesecuritysolutions.atlassian.net/browse/CAD-33)
 - [Dockerize Backend (CAD-37)](https://bridgesecuritysolutions.atlassian.net/browse/CAD-37)
+- 
