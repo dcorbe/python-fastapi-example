@@ -25,6 +25,7 @@ passlib = {extras = ["bcrypt"], version = "^1.7.4"}
 pyaml = "^25.1.0"
 mypy = "^1.9.0"
 pre-commit = "^4.0.1"
+types-passlib = "^1.7.7.20240106"
 
 [build-system]
 requires = ["poetry-core"]
