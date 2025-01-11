@@ -51,7 +51,7 @@ class DatabaseModel(BaseModel):
     async def _execute_query(
         cls,
         db: Database,
-        query: SQL | Composed,  # Updated type to allow Composed SQL
+        query: SQL | Composed,
         params: tuple[Any, ...],
         fetch_one: bool = True
     ) -> Optional[dict[str, Any]]:
