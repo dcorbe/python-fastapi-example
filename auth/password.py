@@ -1,9 +1,8 @@
 """Password hashing and verification utilities."""
-from typing import Any
 from passlib.context import CryptContext
 
 # Create password context with bcrypt scheme
-pwd_context: CryptContext = CryptContext(
+context: CryptContext = CryptContext(
     schemes=["bcrypt"],
     default="bcrypt",
     bcrypt__default_rounds=12  # Recommended rounds for bcrypt
@@ -20,8 +19,7 @@ def hash_password(password: str) -> str:
     Returns:
         Hashed password string
     """
-    result: str = pwd_context.hash(password)
-    return result
+    return context.hash(password)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -35,5 +33,4 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     Returns:
         True if password matches hash, False otherwise
     """
-    result: bool = pwd_context.verify(plain_password, hashed_password)
-    return result
+    return context.verify(plain_password, hashed_password)
