@@ -12,7 +12,7 @@ from .token import Token, create_access_token
 from .password import verify_password
 
 
-router = APIRouter()  # Get this from parent module
+router = APIRouter()
 
 @router.post("/login", response_model=Token)
 async def login(
