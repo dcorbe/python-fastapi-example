@@ -1,6 +1,5 @@
 """Example API endpoints module."""
-from fastapi import APIRouter, Depends
-from auth.token import get_current_user
+from fastapi import APIRouter
 
 router = APIRouter(prefix="/example", tags=["example"])
 
