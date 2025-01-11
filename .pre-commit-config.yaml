@@ -30,3 +30,11 @@ repos:
         language: system
         types: [python]
         require_serial: true
+    -   id: pytest
+        name: pytest
+        entry: poetry run pytest
+        language: system
+        types: [python]
+        pass_filenames: false
+        require_serial: true
+        stages: [pre-commit]
