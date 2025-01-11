@@ -44,6 +44,24 @@ class User(DatabaseModel):
         assert self.email is not None
         assert self.password_hash is not None
 
+    def set_password(self, password: str) -> None:
+        """
+        Set a new password for the user.
+        
+        This method will be used in conjunction with the password hashing utility
+        in the backend. The actual hashing is done in the backend to keep the
+        hashing implementation details separate from the model.
+        
+        Args:
+            password: The plain text password to set
+            
+        Note:
+            This method only sets the hash - you must call save() to persist changes.
+        """
+        if not password:
+            raise ValueError("Password cannot be empty")
+        self.password_hash = password  # Will be hashed by backend before setting
+
     @classmethod
     async def get_by_email(cls, email: str, db: Database) -> Optional['User']:
         """
