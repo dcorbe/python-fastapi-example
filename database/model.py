@@ -75,7 +75,7 @@ class DatabaseModel(BaseModel):
         case_insensitive: bool = False
     ) -> Optional[T]:
         """Generic method to fetch a record by a specific field."""
-        cursor = cls._get_cursor(db)  # Fixed: using cls instead of self
+        cursor = cls._get_cursor(db)
         
         if case_insensitive and isinstance(value, str):
             query = SQL("SELECT * FROM {} WHERE LOWER({}) = LOWER(%s)").format(
