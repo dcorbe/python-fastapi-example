@@ -33,9 +33,3 @@ class AuthRouter:
             )
             
             return Token(access_token=access_token, token_type="bearer")
-
-        @self.router.get("/protected")
-        async def protected_route(
-            current_user: Annotated[User, Depends(get_current_user)]
-        ) -> dict[str, str]:
-            return {"message": f"Hello {current_user.email}"}
