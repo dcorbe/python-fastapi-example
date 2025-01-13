@@ -1,41 +1,11 @@
-# Example Protected Endpoint
+# Example Endpoints
 
-This module demonstrates how to implement and use protected endpoints in the BSS backend.
+This module demonstrates different types of FastAPI endpoints and common patterns.
 
-## Testing with HTTPie
+## Available Endpoints
 
-### 1. Get an Authentication Token
-
-First, get a token by logging in. Store it in an environment variable for convenience:
-
-```bash
-export TOKEN=$(http -f POST http://localhost:8000/auth/login \
-    username=email@address \
-    password=password | jq -r .access_token)
-```
-
-This command:
-- Uses HTTPie's form mode (-f)
-- POSTs to the login endpoint
-- Extracts just the access_token using jq
-- Stores it in the TOKEN environment variable
-
-### 2. Access the Protected Endpoint
-
-Once you have a token, you can access the protected endpoint:
-
-```bash
-http http://localhost:8000/example/protected \
-    "Authorization: Bearer ${TOKEN}"
-```
-
-### Expected Response
-
-If successful, you'll receive a JSON response containing:
-- A message string
-- Your user_id (UUID)
-
-Example:
+### 1. Hello World (`/example/hello`)
+A protected endpoint that requires authentication. Returns a message and the user's ID.
 ```json
 {
     "message": "This is a protected endpoint",
@@ -43,15 +13,62 @@ Example:
 }
 ```
 
-### Common Issues
+### 2. Ping (`/example/ping`)
+A simple unprotected endpoint that returns a ping response.
+```json
+{
+    "ping": "pong"
+}
+```
 
-1. If you receive a 401 Unauthorized error, your token might have expired. Get a new one using the login command.
-2. If you receive a 404 Not Found error, make sure the server has been restarted after installing the example module.
+### 3. Error Example (`/example/error`)
+Demonstrates proper error handling by returning a 403 status code.
 
-## Implementation Details
+## Implementation Examples
 
-The endpoint demonstrates:
-- FastAPI dependency injection for auth
-- Pydantic models for request/response validation
-- JWT token authentication
-- UUID handling
+Each endpoint demonstrates different FastAPI and Pydantic features:
+
+1. `hello.py` - Shows:
+   - Protected routes using Depends(get_current_user)
+   - Pydantic models with UUID fields
+   - Type hinting and docstrings
+
+2. `ping.py` - Shows:
+   - Simple Pydantic model
+   - Unprotected endpoint
+   - Basic response handling
+
+3. `error.py` - Shows:
+   - HTTP exception handling
+   - Custom error messages
+   - Status code usage
+
+## Testing with HTTPie
+
+### Protected Endpoint (hello)
+```bash
+# First get a token
+export TOKEN=$(http -f POST http://localhost:8000/auth/login \
+    username=email@address \
+    password=password | jq -r .access_token)
+
+# Then access the endpoint
+http http://localhost:8000/example/hello \
+    "Authorization: Bearer ${TOKEN}"
+```
+
+### Unprotected Endpoint (ping)
+```bash
+http http://localhost:8000/example/ping
+```
+
+### Error Example
+```bash
+http http://localhost:8000/example/error
+```
+
+## Common Issues
+
+1. 401 Unauthorized: Your token has expired. Get a new one using the login command.
+2. 403 Forbidden: The error endpoint always returns this by design.
+3. 404 Not Found: Ensure the server has been restarted after any code changes.
