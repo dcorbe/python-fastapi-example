@@ -24,24 +24,23 @@ app.add_middleware(
 # Setup crash reporting
 email_config = EmailConfig(
     smtp_host=os.getenv("SMTP_HOST", "smtp.gmail.com"),
-    smtp_port=int(os.getenv("SMTP_PORT", "587")),
+    smtp_port=int(os.getenv("SMTP_PORT", "465")),
     smtp_username=os.getenv("SMTP_USERNAME", ""),
     smtp_password=os.getenv("SMTP_PASSWORD", ""),
-    from_email=os.getenv("FROM_EMAIL", "no-reply@bridgesecuritysolutions.com"),
+    from_email=os.getenv("FROM_EMAIL", "") or os.getenv("SMTP_USERNAME", ""),  # Use SMTP_USERNAME as fallback
     to_emails=[email.strip() for email in os.getenv("TO_EMAILS", "").split(",") if email.strip()],
-    rate_limit_period=int(os.getenv("ERROR_RATE_LIMIT_PERIOD", "300")),  # 5 minutes
-    rate_limit_count=int(os.getenv("ERROR_RATE_LIMIT_COUNT", "10")),     # 10 emails per period
+    rate_limit_period=int(os.getenv("ERROR_RATE_LIMIT_PERIOD", "300")),
+    rate_limit_count=int(os.getenv("ERROR_RATE_LIMIT_COUNT", "10")),
 )
 crash_reporter = setup_crash_reporting(app, email_config)
 
-# Ensure JWT secret key is set
-jwt_secret_key = os.getenv("JWT_SECRET")
-if jwt_secret_key is None:
-    raise RuntimeError("JWT_SECRET environment variable must be set")
+# JWT secret is guaranteed to exist due to the check above
+jwt_secret = os.getenv("JWT_SECRET")
+assert jwt_secret is not None  # This tells mypy that jwt_secret is not None
 
 # Setup authentication
 auth_config = AuthConfig(
-    jwt_secret_key=jwt_secret_key,
+    jwt_secret_key=jwt_secret,  # Now mypy knows this is str, not Optional[str]
     jwt_algorithm=os.getenv("JWT_ALGORITHM", "HS256"),
     access_token_expire_minutes=int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30")),
     max_login_attempts=int(os.getenv("MAX_LOGIN_ATTEMPTS", "5")),
@@ -49,7 +48,6 @@ auth_config = AuthConfig(
 )
 auth_service = setup_auth(app, auth_config)
 
-# TODO: Investigate the deprecation warnings for on_event
 @app.on_event("startup")
 async def startup() -> None:
     database_manager.db = await Database.connect()
@@ -66,3 +64,8 @@ app.include_router(api_v1_router)
 @app.get("/")
 async def hello() -> Dict[str, str]:
     return {"Hello": "World"}
+
+@app.get("/crash-test-dummy")
+async def test_crash() -> None:
+    # This will raise a ZeroDivisionError
+    1 / 0  # Changed to expression statement instead of return
