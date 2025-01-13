@@ -7,7 +7,6 @@ from .dependencies import get_current_user, set_auth_service
 
 def setup_auth(app: FastAPI, config: AuthConfig) -> AuthService:
     """Initialize authentication system"""
-    # Initialize the auth service
     auth_service = AuthService(config)
     
     # Set the global auth service for dependencies

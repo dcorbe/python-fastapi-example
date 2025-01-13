@@ -70,5 +70,5 @@ async def hello() -> Dict[str, str]:
 
 @app.get("/crash-test-dummy")
 async def test_crash() -> None:
-    """# This will raise a ZeroDivisionError"""
+    """This will raise a ZeroDivisionError"""
     1 / 0
