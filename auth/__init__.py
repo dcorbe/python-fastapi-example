@@ -1,19 +1,29 @@
-from typing import Annotated
-from fastapi import Depends, APIRouter
+from fastapi import FastAPI
 
-from user import User
+from .models import AuthConfig, Token, TokenData
+from .service import AuthService
+from .routes import AuthRouter
+from .dependencies import get_current_user, set_auth_service
 
-from .token import Token, create_access_token, get_current_user
+def setup_auth(app: FastAPI, config: AuthConfig) -> AuthService:
+    """Initialize authentication system"""
+    # Initialize the auth service
+    auth_service = AuthService(config)
+    
+    # Set the global auth service for dependencies
+    set_auth_service(auth_service)
+    
+    # Set up the router
+    auth_router = AuthRouter(auth_service)
+    app.include_router(auth_router.router)
+    
+    return auth_service
 
-router = APIRouter(
-    prefix="/auth",
-    tags=["authentication"],
-)
-from .login import router as login_router
-router.include_router(login_router)
-
-@router.get("/protected")
-async def protected_route(
-    current_user: Annotated[User, Depends(get_current_user)]
-) -> dict[str, str]:
-    return {"message": f"Hello {current_user.email}"}
+__all__ = [
+    "setup_auth",
+    "AuthConfig",
+    "Token",
+    "TokenData",
+    "AuthService",
+    "get_current_user"
+]

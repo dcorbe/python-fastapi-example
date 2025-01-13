@@ -7,6 +7,7 @@ readme = "README.md"
 packages = [
     { include = "auth" },
     { include = "example" },
+    { include = "monitoring" },
 ]
 
 [tool.poetry.dependencies]
@@ -20,6 +21,7 @@ bss-lib = {path = "../bss-lib"}
 fastapi = {extras = ["standard"], version = "^0.115.6"}
 pyjwt = {extras = ["crypto"], version = "^2.10.1"}
 passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+aiosmtplib = "^3.0.1"
 
 [tool.poetry.group.dev.dependencies]
 pyaml = "^25.1.0"

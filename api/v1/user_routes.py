@@ -6,7 +6,7 @@ from uuid import UUID
 
 from database import Database
 from database_manager import get_db
-from auth.token import get_current_user
+from auth import get_current_user
 from user import User
 
 router = APIRouter()
