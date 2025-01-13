@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any
+from typing import Dict, Any
 import jwt
 from jwt.exceptions import ExpiredSignatureError, PyJWTError
 from fastapi import HTTPException, status

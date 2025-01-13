@@ -1,23 +1,15 @@
-import os
 from datetime import datetime, timedelta, timezone
 from pydantic import BaseModel
 from fastapi import Depends, HTTPException, status, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from typing import Annotated
 
-# We primarily deal in JWT tokens.
 import jwt
 
 from database import Database
 from user import User
 from database_manager import get_db
-
-# Constants for token handling
-SECRET_KEY: str = os.getenv("JWT_SECRET", "")  # type hint as str
-if not SECRET_KEY:  # checks for empty string too
-    raise ValueError("JWT_SECRET environment variable must be set")
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+from .config import get_jwt_config
 
 # Security scheme for token handling
 security = HTTPBearer()
@@ -30,17 +22,23 @@ class TokenData(BaseModel):
     username: str | None = None
 
 def create_access_token(data: dict) -> str:
+    config = get_jwt_config()
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.now(timezone.utc) + timedelta(minutes=config.access_token_expire_minutes)
     to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode(to_encode, config.secret_key, algorithm=config.algorithm)
 
 async def get_current_user(
     credentials: Annotated[HTTPAuthorizationCredentials, Security(security)],
     db: Database = Depends(get_db)
 ) -> User:
+    config = get_jwt_config()
     try:
-        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(
+            credentials.credentials, 
+            config.secret_key, 
+            algorithms=[config.algorithm]
+        )
         username: str | None = payload.get("sub")
         if username is None:
             raise HTTPException(
