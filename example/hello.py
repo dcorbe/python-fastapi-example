@@ -1,12 +1,17 @@
 """
 This module defines an endpoint for returning a hello world message to the currently logged-in user.
 """
-from fastapi import Depends, HTTPException
+# Global imports
+from pydantic import BaseModel
+from fastapi import Depends
+from uuid import UUID
+
+# Library imports
 from auth.token import get_current_user
 from user import User
+
+# Local imports
 from . import router
-from pydantic import BaseModel
-from uuid import UUID
 
 
 class Hello(BaseModel):

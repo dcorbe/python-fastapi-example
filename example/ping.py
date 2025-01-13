@@ -10,8 +10,9 @@ Classes:
 Functions:
     protected_endpoint: Endpoint that returns a ping message.
 """
-from . import router
 from pydantic import BaseModel
+
+from . import router
 
 
 class Ping(BaseModel):

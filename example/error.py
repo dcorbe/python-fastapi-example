@@ -10,10 +10,10 @@ Classes:
 Functions:
     error_message: Endpoint that raises an HTTPException with a 403 status code.
 """
+from pydantic import BaseModel
 from fastapi import HTTPException
 
 from . import router
-from pydantic import BaseModel
 
 
 class ExampleResponse(BaseModel):
