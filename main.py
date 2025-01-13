@@ -34,9 +34,14 @@ email_config = EmailConfig(
 )
 crash_reporter = setup_crash_reporting(app, email_config)
 
+# Ensure JWT secret key is set
+jwt_secret_key = os.getenv("JWT_SECRET")
+if jwt_secret_key is None:
+    raise RuntimeError("JWT_SECRET environment variable must be set")
+
 # Setup authentication
 auth_config = AuthConfig(
-    jwt_secret_key=os.getenv("JWT_SECRET_KEY", "your-secret-key"),
+    jwt_secret_key=jwt_secret_key,
     jwt_algorithm=os.getenv("JWT_ALGORITHM", "HS256"),
     access_token_expire_minutes=int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30")),
     max_login_attempts=int(os.getenv("MAX_LOGIN_ATTEMPTS", "5")),
