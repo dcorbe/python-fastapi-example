@@ -3,7 +3,7 @@
 This module provides the base class for database models, implementing common
 database operations and utility functions used across different model types.
 """
-from typing import Any, TypeVar, Optional, Sequence, ClassVar
+from typing import Any, TypeVar, Sequence, ClassVar
 from pydantic import BaseModel
 from psycopg.sql import SQL, Identifier, Composed
 from psycopg import AsyncCursor, AsyncConnection
@@ -54,7 +54,7 @@ class DatabaseModel(BaseModel):
         query: SQL | Composed,
         params: tuple[Any, ...],
         fetch_one: bool = True
-    ) -> Optional[dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """Execute a query and optionally return the first result as a dictionary."""
         cursor = cls._get_cursor(db)
         await cursor.execute(query, params)
@@ -73,7 +73,7 @@ class DatabaseModel(BaseModel):
         field: str,
         value: Any,
         case_insensitive: bool = False
-    ) -> Optional[T]:
+    ) -> T | None:
         """Generic method to fetch a record by a specific field."""
         cursor = cls._get_cursor(db)
         

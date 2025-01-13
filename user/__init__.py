@@ -5,7 +5,6 @@ creation, retrieval, and updates while managing attributes like email, password 
 and account status.
 """
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 from pydantic import EmailStr, Field
 from database.model import DatabaseModel
@@ -20,14 +19,14 @@ class User(DatabaseModel):
     table_name = "users"  # Class-level configuration for DatabaseModel
 
     # Model fields
-    id: Optional[UUID] = None
-    email: Optional[EmailStr] = None
-    password_hash: Optional[str] = None
+    id: UUID | None = None
+    email: EmailStr | None = None
+    password_hash: str | None = None
     email_verified: bool = Field(default=False)
     created_at: datetime = Field(default_factory=datetime.now)
-    last_login: Optional[datetime] = None
+    last_login: datetime | None = None
     failed_login_attempts: int = Field(default=0)
-    locked_until: Optional[datetime] = None
+    locked_until: datetime | None = None
 
     @property
     def is_locked(self) -> bool:
@@ -63,7 +62,7 @@ class User(DatabaseModel):
         self.password_hash = password  # Will be hashed by backend before setting
 
     @classmethod
-    async def get_by_email(cls, email: str, db: Database) -> Optional['User']:
+    async def get_by_email(cls, email: str, db: Database) -> 'User | None':
         """
         Retrieve a user by email address.
 
@@ -77,7 +76,7 @@ class User(DatabaseModel):
         return await cls._fetch_by_field(db, "email", email, case_insensitive=True)
 
     @classmethod
-    async def get_by_uuid(cls, uuid: UUID, db: Database) -> Optional['User']:
+    async def get_by_uuid(cls, uuid: UUID, db: Database) -> 'User | None':
         """
         Retrieve a user by UUID.
 
@@ -119,7 +118,7 @@ class User(DatabaseModel):
             """).format(Identifier(self.table_name))
             
             # After _validate_required_fields(), we know email and password_hash are not None
-            update_params: tuple[str, str, bool, Optional[datetime], int, Optional[datetime], UUID] = (
+            update_params: tuple[str, str, bool, datetime | None, int, datetime | None, UUID] = (
                 str(self.email),
                 str(self.password_hash),
                 self.email_verified,
