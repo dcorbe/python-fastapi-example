@@ -8,6 +8,7 @@ import jwt
 
 from database import Database
 from user import User
+from user.operations import get_user_by_email
 from database_manager import get_db
 from .config import get_jwt_config
 
@@ -60,7 +61,7 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    user = await User.get_by_email(db, token_data.username)  # Fixed parameter order
+    user = await get_user_by_email(db, token_data.username)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

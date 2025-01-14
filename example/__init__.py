@@ -1,14 +1,15 @@
-"""
-This module initializes the FastAPI router for the example endpoints.
-"""
+"""Example endpoints."""
 from fastapi import APIRouter
 
-router = APIRouter(prefix="/example", tags=["example"])
+from .books import router as book_router
+from .echo import router as echo_router
+from .error import router as error_router
+from .hello import router as hello_router
+from .ping import router as ping_router
 
-# The reason we're doing additional imports all the way down here is because router needs to be defined first.
-# This helps us avoid circular imports by abusing Python's order-of-execution semantics; making our lives considerably
-# easier in the process.  This is going to make isort mad if we ever decide to adopt it.
-from . import hello
-from . import ping
-from . import error
-from . import echo
+router = APIRouter(prefix="/example")
+router.include_router(book_router)
+router.include_router(echo_router)
+router.include_router(error_router)
+router.include_router(hello_router)
+router.include_router(ping_router)

@@ -1,17 +1,11 @@
-"""
-This module defines an endpoint for returning a hello world message to the currently logged-in user.
-"""
-# Global imports
-from pydantic import BaseModel
-from fastapi import Depends
+"""Example of an authenticated endpoint."""
+from typing import Annotated
 from uuid import UUID
+from fastapi import APIRouter, Depends
+from pydantic import BaseModel
 
-# Library imports
 from auth.token import get_current_user
 from user import User
-
-# Local imports
-from . import router
 
 
 class Hello(BaseModel):
@@ -19,19 +13,18 @@ class Hello(BaseModel):
     user_id: UUID
 
 
+router = APIRouter(tags=["example"])
+
+
 @router.get("/hello", response_model=Hello)
-async def hello_world(current_user: User = Depends(get_current_user)) -> Hello:
+async def hello_world(
+    current_user: Annotated[User, Depends(get_current_user)]
+) -> Hello:
     """
-    An example of a protected endpoint that requires authentication.
-
-    Args:
-        current_user: The authenticated user (injected by FastAPI)
-
+    Example of a protected endpoint that requires authentication.
+    
     Returns:
-        Hello: A simple response containing a message and the user's ID
-
-    Raises:
-        HTTPException: If the user is not authenticated, no boilerplate required
+        Hello: A message and the authenticated user's ID
     """
     return Hello(
         message="This is a protected endpoint",

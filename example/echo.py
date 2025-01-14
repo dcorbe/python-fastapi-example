@@ -8,14 +8,13 @@ Functions:
     echo: Endpoint that echoes back the request data.
 """
 from typing import Annotated
-from fastapi import Request, Depends
+from fastapi import APIRouter, Request, Depends
 from fastapi.responses import JSONResponse
 
 from auth.token import get_current_user
 from user import User
 
-from . import router
-
+router = APIRouter(tags=["example"])
 
 @router.post("/echo")
 async def echo(request: Request, user: Annotated[User, Depends(get_current_user)]) -> JSONResponse:
@@ -30,7 +29,7 @@ async def echo(request: Request, user: Annotated[User, Depends(get_current_user)
         JSONResponse containing the echoed request data
 
     Raises:
-        HTTPException: If the user is not authenticated (automaitcally handled by the auth module)
+        HTTPException: If the user is not authenticated (automatically handled by the auth module)
     """
     body = await request.body()
     

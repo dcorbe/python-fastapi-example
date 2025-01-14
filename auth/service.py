@@ -9,7 +9,7 @@ from sqlalchemy import select
 from passlib.context import CryptContext
 from passlib.exc import UnknownHashError
 
-from database.models import User
+from user.model import User  # Updated import path
 from .models import AuthConfig, TokenData, LoginAttempt
 
 # Initialize CryptContext once at module level
