@@ -11,3 +11,4 @@ router = APIRouter(prefix="/example", tags=["example"])
 from . import hello
 from . import ping
 from . import error
+from . import echo
