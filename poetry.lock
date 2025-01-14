@@ -169,7 +169,7 @@ typecheck = ["mypy"]
 
 [[package]]
 name = "bss-lib"
-version = "0.2.0"
+version = "0.3.2"
 description = "BSS common library"
 optional = false
 python-versions = "^3.12"
