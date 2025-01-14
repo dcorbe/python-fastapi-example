@@ -11,7 +11,8 @@ application that does the following:
 
 ## Table of Contents
 - [Core Dependencies](#core-dependencies)
-- [Setting Up A Development Environment (MacOS)](#setting-up-a-development-environment-macos)
+- [Setting Up A Development Environment](#setting-up-a-development-environment)
+- [Database Setup](#database-setup)
 - [Running the FastAPI Server](#running-the-fastapi-server)
 - [Type Checking](#type-checking)
 - [To Do List](#to-do)
@@ -40,7 +41,7 @@ application that does the following:
 - [**pre-commit**](https://pre-commit.com/) - Git hooks framework
 - [**PyYAML**](https://pyyaml.org/) - YAML parsing and writing
 
-## Setting Up A Development Environment (MacOS)
+## Setting Up A Development Environment
 1. Install Python 3.12:
 ```bash
 brew install python@3.12
@@ -72,28 +73,54 @@ poetry install
 pre-commit install
 ```
 
+## Database Setup
+
+1. Configure environment variables:
+```bash
+# Copy the example environment file
+cp .env.example .env
+
+# Edit the .env file with your desired database credentials
+# At minimum, set these variables:
+POSTGRES_USER=your_username
+POSTGRES_PASSWORD=your_secure_password
+POSTGRES_DB=bss_dev
+DATABASE_URL=postgres://your_username:your_secure_password@localhost:5432/bss_dev
+JWT_SECRET=your_secure_jwt_secret
+```
+
+2. Start the PostgreSQL database:
+```bash
+# Start PostgreSQL using Docker Compose
+docker-compose up -d postgres
+
+# Wait for the health check to pass
+docker-compose ps
+```
+
+3. Initialize your first user:
+```bash
+# Inside poetry shell
+python tools/adduser.py admin@example.com your_secure_password
+```
+
+This will create your initial user with the specified email and password. You can use these credentials to authenticate with the API.
+
 ## Running the FastAPI Server
 
-1. Set up environment variables:
-   ```bash
-   # Copy the example environment file
-   cp .env.example .env
-   
-   # Edit the .env file with your configuration
-   ```
+1. Start the FastAPI server:
 
-2. Set up the PostgreSQL database:
-   ```bash
-   # Start PostgreSQL
-   docker-compose up
-   
-   ```
-3. Start the FastAPI server:
-
-   a. Development mode (with auto-reload):
+   Development mode (with auto-reload):
    ```bash
    # Inside poetry shell
-   fastapi dev main.py
+   fastapi main.py
+   ```
+
+2. Verify the setup:
+   ```bash
+   # Test the login endpoint with your created user
+   export TOKEN=$(http -f POST http://localhost:8000/auth/login username=daniel@corbe.net password=cgpe845Z | jq -r .access_token)
+   echo ${TOKEN}
    ```
 
 ## Type Checking
