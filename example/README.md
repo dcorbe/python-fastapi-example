@@ -44,6 +44,47 @@ A protected endpoint that echoes back the request details. Useful for debugging 
 }
 ```
 
+### 5. Books CRUD (`/example/books`)
+A complete CRUD service demonstration using FastAPI, SQLAlchemy, and Pydantic. Shows proper database integration and REST API patterns.
+
+#### Create a Book (POST `/example/books`)
+```json
+{
+    "title": "Example Book",
+    "author": "John Doe",
+    "description": "Optional book description"
+}
+```
+
+#### Get a Book (GET `/example/books/{book_id}`)
+```json
+{
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "title": "Example Book",
+    "author": "John Doe",
+    "description": "Optional book description",
+    "created_at": "2024-01-14T12:00:00"
+}
+```
+
+#### List Books (GET `/example/books`)
+```json
+[
+    {
+        "id": "550e8400-e29b-41d4-a716-446655440000",
+        "title": "Example Book 1",
+        "author": "John Doe",
+        "created_at": "2024-01-14T12:00:00"
+    },
+    {
+        "id": "650e8400-e29b-41d4-a716-446655440000",
+        "title": "Example Book 2",
+        "author": "Jane Doe",
+        "created_at": "2024-01-14T12:30:00"
+    }
+]
+```
+
 ## Implementation Patterns
 
 Each endpoint demonstrates different FastAPI features and best practices:
@@ -72,9 +113,17 @@ Each endpoint demonstrates different FastAPI features and best practices:
    - Async request processing
    - JSONResponse usage
 
+5. `books.py` - Complete CRUD Service
+   - SQLAlchemy integration with async session handling
+   - Pydantic models for request/response validation
+   - Proper error handling with database operations
+   - Type hints and dependency injection
+   - REST API best practices
+   - Transaction management and rollbacks
+
 ## Testing Examples
 
-### Protected Endpoints (hello, echo)
+### Protected Endpoints (hello, echo, books)
 ```bash
 # Get an authentication token
 export TOKEN=$(http -f POST http://localhost:8000/auth/login \
@@ -89,6 +138,32 @@ http http://localhost:8000/example/hello \
 http POST http://localhost:8000/example/echo \
     "Authorization: Bearer ${TOKEN}" \
     message="test message"
+
+# Create a book
+http POST http://localhost:8000/example/books \
+    "Authorization: Bearer ${TOKEN}" \
+    title="New Book" \
+    author="Author Name" \
+    description="Book description"
+
+# Get all books
+http GET http://localhost:8000/example/books \
+    "Authorization: Bearer ${TOKEN}"
+
+# Get specific book
+http GET http://localhost:8000/example/books/{book_id} \
+    "Authorization: Bearer ${TOKEN}"
+
+# Update a book
+http PUT http://localhost:8000/example/books/{book_id} \
+    "Authorization: Bearer ${TOKEN}" \
+    title="Updated Title" \
+    author="Updated Author" \
+    description="Updated description"
+
+# Delete a book
+http DELETE http://localhost:8000/example/books/{book_id} \
+    "Authorization: Bearer ${TOKEN}"
 ```
 
 ### Unprotected Endpoint (ping)
@@ -122,24 +197,7 @@ http http://localhost:8000/example/error
    - Check content-type header is set correctly
    - Ensure all required fields are provided
 
-## Best Practices Demonstrated
-
-1. Authentication and Authorization
-   - Consistent token validation
-   - Clear permission checks
-   - User context handling
-
-2. Request Processing
-   - Proper async/await usage
-   - Request body handling
-   - Header processing
-
-3. Response Handling
-   - Consistent response models
-   - Proper status codes
-   - Error handling
-
-4. Documentation
-   - Clear docstrings
-   - Type hints
-   - Response examples
+5. Database Issues (400 Bad Request)
+   - Check for duplicate entries when creating/updating books
+   - Ensure all required fields are provided
+   - Verify UUID format for book IDs
