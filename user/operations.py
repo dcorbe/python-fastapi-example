@@ -1,13 +1,29 @@
 """Database operations for user management."""
-from typing import Optional, List, NoReturn
+from typing import Optional, List
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .model import User
 from .schemas import UserCreate, UserUpdate
+
+
+async def email_exists(db: AsyncSession, email: str) -> bool:
+    """
+    Check if an email already exists (case-insensitive).
+    
+    Args:
+        db: Database session
+        email: Email to check
+    
+    Returns:
+        True if email exists, False otherwise
+    """
+    stmt = select(User).where(func.lower(User.email) == func.lower(email))
+    result = await db.execute(stmt)
+    return result.first() is not None
 
 
 async def get_user_by_email(
@@ -28,7 +44,7 @@ async def get_user_by_email(
     """
     stmt = select(User)
     if case_insensitive:
-        stmt = stmt.where(User.email.ilike(email))
+        stmt = stmt.where(func.lower(User.email) == func.lower(email))
     else:
         stmt = stmt.where(User.email == email)
     
@@ -99,6 +115,13 @@ async def create_user(
     Raises:
         IntegrityError: If user with same email already exists
     """
+    if await email_exists(db, user.email):
+        raise IntegrityError(
+            "User with this email already exists",
+            params={"email": user.email},
+            orig=Exception("Email already exists")
+        )
+    
     db_user = User(**user.model_dump())
     db.add(db_user)
     try:
@@ -134,6 +157,16 @@ async def update_user(
         IntegrityError: If updating email to one that already exists
     """
     update_data = user_update.model_dump(exclude_unset=True)
+    
+    # Check email uniqueness if email is being updated
+    if "email" in update_data and update_data["email"] != db_user.email:
+        if await email_exists(db, update_data["email"]):
+            raise IntegrityError(
+                "Email address already taken",
+                params={"email": update_data["email"]},
+                orig=Exception("Email already taken")
+            )
+    
     for key, value in update_data.items():
         setattr(db_user, key, value)
     

@@ -19,14 +19,31 @@ from .operations import (
     get_all_users,
     create_user,
     update_user,
-    delete_user,
+    delete_user
 )
 from .schemas import UserCreate, UserUpdate, UserResponse
 
 
-async def _clear_all_tables(session: AsyncSession) -> None:
-    """Clear all test data from tables."""
-    await session.execute(text("TRUNCATE TABLE users CASCADE"))
+async def _clear_database(session: AsyncSession) -> None:
+    """Reset the database to a clean state."""
+    # Drop and recreate the users table
+    await session.execute(text("DROP TABLE IF EXISTS users CASCADE"))
+    await session.execute(text("""
+        CREATE TABLE users (
+            id UUID PRIMARY KEY,
+            email VARCHAR(255) NOT NULL,
+            password_hash VARCHAR(255) NOT NULL,
+            email_verified BOOLEAN NOT NULL DEFAULT FALSE,
+            created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+            last_login TIMESTAMP WITH TIME ZONE,
+            failed_login_attempts INTEGER NOT NULL DEFAULT 0,
+            locked_until TIMESTAMP WITH TIME ZONE
+        )
+    """))
+    # Recreate the email index
+    await session.execute(text(
+        "CREATE UNIQUE INDEX ix_users_email_lower ON users (LOWER(email))"
+    ))
     await session.commit()
 
 
@@ -46,18 +63,15 @@ async def setup_test_database() -> AsyncGenerator[None, None]:
         
         # Clear test data before each test
         async with Database.session() as session:
-            await _clear_all_tables(session)
+            await _clear_database(session)
         
         yield
         
     finally:
         # Clear all test data after each test
-        try:
-            async with Database.session() as session:
-                await _clear_all_tables(session)
-        except Exception:
-            pass  # Ensure cleanup doesn't prevent other cleanup steps
-        
+        async with Database.session() as session:
+            await _clear_database(session)
+            
         # Close all connections
         await Database.close()
         
@@ -77,8 +91,6 @@ async def session() -> AsyncGenerator[AsyncSession, None]:
     """Create database session for testing."""
     async with Database.session() as session:
         yield session
-        # Ensure transaction is rolled back even if test fails
-        await session.rollback()
 
 
 @pytest_asyncio.fixture
@@ -163,19 +175,27 @@ async def test_delete_user(session: AsyncSession, test_user: User) -> None:
 @pytest.mark.asyncio
 async def test_get_all_users(session: AsyncSession) -> None:
     """Test retrieving multiple users."""
-    # Create multiple users
+    # Create multiple users with unique emails
     users_data = [
-        UserCreate(email=f"user{i}@example.com", password_hash=f"hash{i}")
+        UserCreate(
+            email=f"test{i}@unique.example.com",  # More unique email pattern
+            password_hash=f"hash{i}"
+        )
         for i in range(3)
     ]
-    
+
+    # Create users one by one
+    created_users = []
     for user_data in users_data:
-        await create_user(session, user_data)
-    
+        user = await create_user(session, user_data)
+        created_users.append(user)
+        await session.commit()  # Commit after each creation
+
     # Test retrieving all users
     all_users = await get_all_users(session)
     assert len(all_users) == 3
-    
+    assert len({u.email for u in all_users}) == 3  # Verify emails are unique
+
     # Test pagination
     paged_users = await get_all_users(session, limit=2)
     assert len(paged_users) == 2
