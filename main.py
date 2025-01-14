@@ -75,4 +75,4 @@ async def test_crash() -> None:
 
 # Do not allow this app to be called directly from the command line
 if __name__ == "__main__":
-    raise RuntimeError("Use 'fastapi main.py' to run this application")
+    raise RuntimeError("Use 'fastapi dev main.py' to run this application")
