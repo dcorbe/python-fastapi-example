@@ -13,6 +13,7 @@ from config import get_settings
 
 app = FastAPI()
 
+# CORS configuration.   TODO: Do not allow all origins in production
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
