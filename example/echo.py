@@ -27,6 +27,9 @@ async def echo(request: Request, user: User = Depends(get_current_user)) -> JSON
         
     Returns:
         JSONResponse containing the echoed request data
+
+    Raises:
+        HTTPException: If the user is not authenticated (automaitcally handled by the auth module)
     """
     body = await request.body()
     
