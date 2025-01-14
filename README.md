@@ -12,6 +12,7 @@ application that does the following:
 ## Table of Contents
 - [Core Dependencies](#core-dependencies)
 - [Setting Up A Development Environment (MacOS)](#setting-up-a-development-environment-macos)
+- [Running the FastAPI Server](#running-the-fastapi-server)
 - [Type Checking](#type-checking)
 - [To Do List](#to-do)
 
@@ -71,6 +72,30 @@ poetry install
 pre-commit install
 ```
 
+## Running the FastAPI Server
+
+1. Set up environment variables:
+   ```bash
+   # Copy the example environment file
+   cp .env.example .env
+   
+   # Edit the .env file with your configuration
+   ```
+
+2. Set up the PostgreSQL database:
+   ```bash
+   # Start PostgreSQL
+   docker-compose up
+   
+   ```
+3. Start the FastAPI server:
+
+   a. Development mode (with auto-reload):
+   ```bash
+   # Inside poetry shell
+   fastapi dev main.py
+   ```
+
 ## Type Checking
 
 The project uses mypy for static type checking. Type checking is enforced through:
@@ -96,4 +121,3 @@ poetry run mypy .
 - [Camera API (CAD-32)](https://bridgesecuritysolutions.atlassian.net/browse/CAD-32)
 - [Camera Logging/Audit (CAD-33)](https://bridgesecuritysolutions.atlassian.net/browse/CAD-33)
 - [Dockerize Backend (CAD-37)](https://bridgesecuritysolutions.atlassian.net/browse/CAD-37)
-- 
