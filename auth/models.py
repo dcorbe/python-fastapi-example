@@ -1,4 +1,5 @@
-from datetime import datetime
+"""Authentication models."""
+from datetime import datetime, UTC
 from pydantic import BaseModel, Field
 from typing import Optional
 
@@ -25,4 +26,4 @@ class LoginAttempt(BaseModel):
     email: str
     attempts: int = 0
     locked_until: Optional[datetime] = None
-    last_attempt: datetime = Field(default_factory=datetime.utcnow)
+    last_attempt: datetime = Field(default_factory=lambda: datetime.now(UTC))
