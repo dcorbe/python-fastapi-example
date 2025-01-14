@@ -8,7 +8,7 @@ from .operations import (
     update_user,
     delete_user,
 )
-from .schemas import UserBase, UserCreate, UserRead, UserUpdate
+from .schemas import UserBase, UserCreate, UserResponse, UserUpdate
 
 __all__ = [
     # Models
@@ -17,7 +17,7 @@ __all__ = [
     # Schemas
     "UserBase",
     "UserCreate",
-    "UserRead",
+    "UserResponse",
     "UserUpdate",
     
     # Operations

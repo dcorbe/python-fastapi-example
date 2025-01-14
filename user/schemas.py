@@ -27,8 +27,8 @@ class UserCreate(UserBase):
     )
 
 
-class UserRead(UserBase):
-    """Schema for reading user data."""
+class UserResponse(UserBase):
+    """Schema for user data in API responses."""
     id: UUID = Field(..., description="User's unique identifier")
     created_at: datetime = Field(..., description="When the user was created")
     last_login: Optional[datetime] = Field(None, description="Last login timestamp")

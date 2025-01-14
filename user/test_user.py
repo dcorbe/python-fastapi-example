@@ -21,7 +21,7 @@ from .operations import (
     update_user,
     delete_user,
 )
-from .schemas import UserCreate, UserUpdate
+from .schemas import UserCreate, UserUpdate, UserResponse
 
 
 async def _clear_all_tables(session: AsyncSession) -> None:
