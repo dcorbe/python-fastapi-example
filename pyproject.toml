@@ -31,6 +31,8 @@ pyaml = "^25.1.0"
 mypy = "^1.9.0"
 pre-commit = "^4.0.1"
 types-passlib = "^1.7.7.20240106"
+pytest = "^8.3.4"
+pytest-asyncio = "^0.25.2"
 
 [build-system]
 requires = ["poetry-core"]
@@ -60,3 +62,12 @@ warn_required_dynamic_aliases = true
 [[tool.mypy.overrides]]
 module = ["database.*", "user.*"]
 ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "strict"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["example", "auth", "monitoring"]
+python_files = ["test_*.py"]
+filterwarnings = [
+    "ignore::DeprecationWarning:passlib.*:",
+]
