@@ -7,6 +7,7 @@ when accessed. The response includes the request headers, method, URL, and body.
 Functions:
     echo: Endpoint that echoes back the request data.
 """
+from typing import Annotated
 from fastapi import Request, Depends
 from fastapi.responses import JSONResponse
 
@@ -17,7 +18,7 @@ from . import router
 
 
 @router.post("/echo")
-async def echo(request: Request, user: User = Depends(get_current_user)) -> JSONResponse:
+async def echo(request: Request, user: Annotated[User, Depends(get_current_user)]) -> JSONResponse:
     """
     Echo back the request body and headers.
     
