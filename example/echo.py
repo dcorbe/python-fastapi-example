@@ -7,7 +7,7 @@ when accessed. The response includes the request headers, method, URL, and body.
 Functions:
     echo: Endpoint that echoes back the request data.
 """
-from fastapi import APIRouter, Request, Depends
+from fastapi import Request, Depends
 from fastapi.responses import JSONResponse
 
 from auth.token import get_current_user
