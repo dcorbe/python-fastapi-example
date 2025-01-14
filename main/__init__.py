@@ -37,4 +37,4 @@ async def test_crash() -> None:
 __all__ = ["app"]
 
 if __name__ == "__main__":
-    raise RuntimeError("Please use 'fastapi dev main to run this application")
+    raise RuntimeError("Please use 'fastapi dev main' to run this application")
