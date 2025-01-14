@@ -9,12 +9,10 @@ import database_manager
 from monitoring import setup_crash_reporting, EmailConfig
 from auth import setup_auth, AuthConfig
 from auth.config import initialize_jwt_config, get_jwt_config
-import os
+from config import get_settings
 
-# We are a FastAPI application
 app = FastAPI()
 
-# CORS Configuration.  TODO: Do not set allow_origins to "*" in production
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -23,34 +21,32 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize JWT config
+settings = get_settings()
+
 initialize_jwt_config()
 jwt_config = get_jwt_config()
 
-# Setup crash reporting
 email_config = EmailConfig(
-    smtp_host=os.getenv("SMTP_HOST", "smtp.gmail.com"),
-    smtp_port=int(os.getenv("SMTP_PORT", "465")),
-    smtp_username=os.getenv("SMTP_USERNAME", ""),
-    smtp_password=os.getenv("SMTP_PASSWORD", ""),
-    from_email=os.getenv("FROM_EMAIL", "") or os.getenv("SMTP_USERNAME", ""),
-    to_emails=[email.strip() for email in os.getenv("TO_EMAILS", "").split(",") if email.strip()],
-    rate_limit_period=int(os.getenv("ERROR_RATE_LIMIT_PERIOD", "300")),
-    rate_limit_count=int(os.getenv("ERROR_RATE_LIMIT_COUNT", "10")),
+    smtp_host=settings.SMTP_HOST,
+    smtp_port=settings.SMTP_PORT,
+    smtp_username=settings.SMTP_USERNAME,
+    smtp_password=settings.SMTP_PASSWORD,
+    from_email=settings.get_from_email(),
+    to_emails=settings.get_email_list(),
+    rate_limit_period=settings.ERROR_RATE_LIMIT_PERIOD,
+    rate_limit_count=settings.ERROR_RATE_LIMIT_COUNT,
 )
 crash_reporter = setup_crash_reporting(app, email_config)
 
-# Setup the authentication engine
 auth_config = AuthConfig(
-    jwt_secret_key=jwt_config.secret_key,
-    jwt_algorithm=jwt_config.algorithm,
-    access_token_expire_minutes=jwt_config.access_token_expire_minutes,
-    max_login_attempts=int(os.getenv("MAX_LOGIN_ATTEMPTS", "5")),
-    lockout_minutes=int(os.getenv("LOCKOUT_MINUTES", "15"))
+    jwt_secret_key=settings.JWT_SECRET,
+    jwt_algorithm=settings.JWT_ALGORITHM,
+    access_token_expire_minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES,
+    max_login_attempts=settings.MAX_LOGIN_ATTEMPTS,
+    lockout_minutes=settings.LOCKOUT_MINUTES
 )
 auth_service = setup_auth(app, auth_config)
 
-# TODO: Investigate on_event deprecation warning here
 @app.on_event("startup")
 async def startup() -> None:
     database_manager.db = await Database.connect()
