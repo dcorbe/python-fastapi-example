@@ -60,7 +60,7 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    user = await User.get_by_email(token_data.username, db)
+    user = await User.get_by_email(db, token_data.username)  # Fixed parameter order
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

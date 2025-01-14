@@ -1,22 +1,27 @@
-from datetime import datetime, timedelta
+"""Authentication service."""
+from datetime import datetime, timedelta, UTC
 from typing import Dict, Any
 import jwt
 from jwt.exceptions import ExpiredSignatureError, PyJWTError
 from fastapi import HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from passlib.context import CryptContext
 from passlib.exc import UnknownHashError
 
-from database import Database
-from user import User
+from database.models import User
 from .models import AuthConfig, TokenData, LoginAttempt
 
 class AuthService:
+    """Service for handling authentication and token management."""
+    
     def __init__(self, config: AuthConfig):
         self.config = config
         self._pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
         self._login_attempts: Dict[str, LoginAttempt] = {}
 
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
+        """Verify a password against its hash."""
         try:
             return self._pwd_context.verify(plain_password, hashed_password)
         except UnknownHashError:
@@ -27,11 +32,13 @@ class AuthService:
             )
 
     def hash_password(self, password: str) -> str:
+        """Hash a password."""
         return self._pwd_context.hash(password)
 
     def create_access_token(self, data: Dict[str, Any]) -> str:
+        """Create a new JWT access token."""
         to_encode = data.copy()
-        expire = datetime.utcnow() + timedelta(minutes=self.config.access_token_expire_minutes)
+        expire = datetime.now(UTC) + timedelta(minutes=self.config.access_token_expire_minutes)
         to_encode.update({"exp": expire})
         
         return jwt.encode(
@@ -41,6 +48,7 @@ class AuthService:
         )
 
     def decode_token(self, token: str) -> TokenData:
+        """Decode and validate a JWT token."""
         try:
             payload = jwt.decode(
                 token,
@@ -65,8 +73,9 @@ class AuthService:
         self,
         email: str,
         password: str,
-        db: Database
+        session: AsyncSession
     ) -> User:
+        """Authenticate a user."""
         # Check for account lockout
         if self._is_account_locked(email):
             raise HTTPException(
@@ -76,7 +85,10 @@ class AuthService:
             )
 
         # Get user
-        user = await User.get_by_email(email, db)
+        stmt = select(User).where(User.email.ilike(email))
+        result = await session.execute(stmt)
+        user = result.scalar_one_or_none()
+        
         if not user:
             self._record_failed_attempt(email)
             raise HTTPException(
@@ -98,33 +110,36 @@ class AuthService:
         self._clear_failed_attempts(email)
         
         # Update last login
-        user.last_login = datetime.utcnow()
-        await user.save(db)
+        user.last_login = datetime.now(UTC)
+        await session.commit()
         
         return user
 
     def _is_account_locked(self, email: str) -> bool:
+        """Check if an account is locked."""
         attempt = self._login_attempts.get(email)
         if not attempt:
             return False
         
-        if attempt.locked_until and datetime.utcnow() < attempt.locked_until:
+        if attempt.locked_until and datetime.now(UTC) < attempt.locked_until:
             return True
         
         return False
 
     def _record_failed_attempt(self, email: str) -> None:
+        """Record a failed login attempt."""
         attempt = self._login_attempts.get(email, LoginAttempt(email=email))
         attempt.attempts += 1
-        attempt.last_attempt = datetime.utcnow()
+        attempt.last_attempt = datetime.now(UTC)
         
         if attempt.attempts >= self.config.max_login_attempts:
-            attempt.locked_until = datetime.utcnow() + timedelta(
+            attempt.locked_until = datetime.now(UTC) + timedelta(
                 minutes=self.config.lockout_minutes
             )
         
         self._login_attempts[email] = attempt
 
     def _clear_failed_attempts(self, email: str) -> None:
+        """Clear failed login attempts for a user."""
         if email in self._login_attempts:
             del self._login_attempts[email]

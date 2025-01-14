@@ -1,8 +1,10 @@
+"""Database session management."""
+from typing import AsyncGenerator
+from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 from database import Database
 
-db: Database | None = None
-
-async def get_db() -> Database:
-    if db is None:
-        raise RuntimeError("Database not initialized")
-    return db
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    """Get a database session."""
+    async with Database.session() as session:
+        yield session

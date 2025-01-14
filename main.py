@@ -1,11 +1,12 @@
+"""Main FastAPI application."""
 from typing import Dict
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from example import router as example_router
 from api.v1 import router as api_v1_router
 from database import Database
-import database_manager
 from monitoring import setup_crash_reporting, EmailConfig
 from auth import setup_auth, AuthConfig
 from auth.config import initialize_jwt_config, get_jwt_config
@@ -51,19 +52,20 @@ auth_service = setup_auth(app, auth_config)
 # TODO: Investigate on_event deprecation warnings emitted here
 @app.on_event("startup")
 async def startup() -> None:
-    database_manager.db = await Database.connect()
+    """Initialize database on startup."""
+    Database.init()
 
 @app.on_event("shutdown")
 async def shutdown() -> None:
-    if database_manager.db:
-        await database_manager.db.close()
-        database_manager.db = None
+    """Close database on shutdown."""
+    await Database.close()
 
 app.include_router(example_router)
 app.include_router(api_v1_router)
 
 @app.get("/")
 async def hello() -> Dict[str, str]:
+    """Hello world endpoint."""
     return {"Hello": "World"}
 
 @app.get("/crash-test-dummy")

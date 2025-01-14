@@ -1,8 +1,9 @@
+"""Authentication routes."""
 from typing import Annotated
 from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from database import Database
 from database_manager import get_db
 from user import User
 
@@ -11,6 +12,8 @@ from .service import AuthService
 from .dependencies import get_current_user
 
 class AuthRouter:
+    """Router for authentication endpoints."""
+    
     def __init__(self, auth_service: AuthService):
         self.auth_service = auth_service
         self.router = APIRouter(prefix="/auth", tags=["authentication"])
@@ -20,8 +23,9 @@ class AuthRouter:
         @self.router.post("/login", response_model=Token)
         async def login(
             form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-            db: Database = Depends(get_db)
+            db: AsyncSession = Depends(get_db)
         ) -> Token:
+            """Login endpoint."""
             user = await self.auth_service.authenticate_user(
                 form_data.username,
                 form_data.password,
