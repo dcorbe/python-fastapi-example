@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bss-lib"
-version = "0.3.2"
+version = "0.3.3"
 description = "BSS common library"
 authors = ["BSS <engineering@bridgesecuritysolutions.com>"]
 readme = "README.md"
