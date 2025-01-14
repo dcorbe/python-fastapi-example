@@ -1,11 +1,11 @@
 # Example Endpoints
 
-This module demonstrates different types of FastAPI endpoints and common patterns.
+This module demonstrates common patterns and best practices for implementing FastAPI endpoints in the Bridge Security Solutions backend.
 
 ## Available Endpoints
 
 ### 1. Hello World (`/example/hello`)
-A protected endpoint that requires authentication. Returns a message and the user's ID.
+A protected endpoint that requires authentication. Returns a greeting message and the authenticated user's ID.
 ```json
 {
     "message": "This is a protected endpoint",
@@ -14,7 +14,7 @@ A protected endpoint that requires authentication. Returns a message and the use
 ```
 
 ### 2. Ping (`/example/ping`)
-A simple unprotected endpoint that returns a ping response.
+A simple unprotected endpoint that returns a ping response. Useful for health checks and basic connectivity testing.
 ```json
 {
     "ping": "pong"
@@ -22,39 +22,73 @@ A simple unprotected endpoint that returns a ping response.
 ```
 
 ### 3. Error Example (`/example/error`)
-Demonstrates proper error handling by returning a 403 status code.
+Demonstrates proper error handling by returning a 403 Forbidden response. Shows how to use FastAPI's HTTPException.
+```json
+{
+    "detail": "You are not authorized to access this resource"
+}
+```
 
-## Implementation Examples
+### 4. Echo (`/example/echo`)
+A protected endpoint that echoes back the request details. Useful for debugging and demonstrating request handling.
+```json
+{
+    "headers": {
+        "authorization": "Bearer <token>",
+        "content-type": "application/json",
+        ...
+    },
+    "method": "POST",
+    "url": "http://localhost:8000/example/echo",
+    "body": "your request body here"
+}
+```
 
-Each endpoint demonstrates different FastAPI and Pydantic features:
+## Implementation Patterns
 
-1. `hello.py` - Shows:
-   - Protected routes using Depends(get_current_user)
+Each endpoint demonstrates different FastAPI features and best practices:
+
+1. `hello.py` - Protected Routes and User Authentication
+   - Using `Depends(get_current_user)` for authentication
    - Pydantic models with UUID fields
-   - Type hinting and docstrings
+   - Type hints and comprehensive docstrings
+   - Response model validation
 
-2. `ping.py` - Shows:
-   - Simple Pydantic model
-   - Unprotected endpoint
+2. `ping.py` - Basic Endpoint Structure
+   - Simple Pydantic response models
+   - Unprotected endpoint implementation
    - Basic response handling
+   - Function documentation
 
-3. `error.py` - Shows:
-   - HTTP exception handling
+3. `error.py` - Error Handling
+   - HTTP exception handling with proper status codes
    - Custom error messages
-   - Status code usage
+   - Response model for errors
+   - Exception documentation
 
-## Testing with HTTPie
+4. `echo.py` - Request Processing
+   - Request body and header handling
+   - Protected route with user authentication
+   - Async request processing
+   - JSONResponse usage
 
-### Protected Endpoint (hello)
+## Testing Examples
+
+### Protected Endpoints (hello, echo)
 ```bash
-# First get a token
+# Get an authentication token
 export TOKEN=$(http -f POST http://localhost:8000/auth/login \
     username=email@address \
     password=password | jq -r .access_token)
 
-# Then access the endpoint
+# Access hello endpoint
 http http://localhost:8000/example/hello \
     "Authorization: Bearer ${TOKEN}"
+
+# Test echo endpoint
+http POST http://localhost:8000/example/echo \
+    "Authorization: Bearer ${TOKEN}" \
+    message="test message"
 ```
 
 ### Unprotected Endpoint (ping)
@@ -67,8 +101,45 @@ http http://localhost:8000/example/ping
 http http://localhost:8000/example/error
 ```
 
-## Common Issues
+## Common Issues and Solutions
 
-1. 401 Unauthorized: Your token has expired. Get a new one using the login command.
-2. 403 Forbidden: The error endpoint always returns this by design.
-3. 404 Not Found: Ensure the server has been restarted after any code changes.
+1. Authentication Issues (401 Unauthorized)
+   - Token has expired → Get a new token using the login endpoint
+   - Missing token → Include Authorization header with Bearer token
+   - Invalid token → Ensure token format is correct
+
+2. Permission Issues (403 Forbidden)
+   - Error endpoint returns this by design
+   - Check user roles and permissions for protected endpoints
+
+3. Request Issues (404 Not Found)
+   - Verify server is running
+   - Check endpoint URL is correct
+   - Ensure server has been restarted after code changes
+
+4. Request Body Issues (422 Unprocessable Entity)
+   - Verify request body matches expected schema
+   - Check content-type header is set correctly
+   - Ensure all required fields are provided
+
+## Best Practices Demonstrated
+
+1. Authentication and Authorization
+   - Consistent token validation
+   - Clear permission checks
+   - User context handling
+
+2. Request Processing
+   - Proper async/await usage
+   - Request body handling
+   - Header processing
+
+3. Response Handling
+   - Consistent response models
+   - Proper status codes
+   - Error handling
+
+4. Documentation
+   - Clear docstrings
+   - Type hints
+   - Response examples
