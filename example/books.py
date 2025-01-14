@@ -15,28 +15,38 @@ from user import User
 
 
 class BookBase(BaseModel):
-    """Base schema for Book data."""
+    """Base schema with common optional fields for both create and update."""
+    title: Optional[str] = None
+    author: Optional[str] = None
+    description: Optional[str] = None
+
+
+class BookCreate(BaseModel):
+    """Schema for creating a new book with required fields."""
     title: str
     author: str
     description: Optional[str] = None
 
 
-class BookCreate(BookBase):
-    """Schema for creating a new book."""
+class BookUpdate(BookBase):
+    """Schema for updating an existing book. All fields are optional."""
     pass
 
 
-class BookRead(BookBase):
-    """Schema for reading a book."""
+class BookResponse(BaseModel):
+    """Schema for book responses in all API operations."""
     id: UUID
-    created_at: datetime  # Add this to match the SQLAlchemy model
+    title: str
+    author: str
+    description: Optional[str] = None
+    created_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
 
 router = APIRouter(tags=["example"])
 
 
-@router.post("/books", response_model=BookRead, status_code=201)
+@router.post("/books", response_model=BookResponse, status_code=201)
 async def create_book(
     current_user: Annotated[User, Depends(get_current_user)],
     book: BookCreate,
@@ -54,7 +64,7 @@ async def create_book(
         raise HTTPException(status_code=400, detail="Book creation failed")
 
 
-@router.get("/books/{book_id}", response_model=BookRead)
+@router.get("/books/{book_id}", response_model=BookResponse)
 async def read_book(
     current_user: Annotated[User, Depends(get_current_user)],
     book_id: UUID,
@@ -68,7 +78,7 @@ async def read_book(
     raise HTTPException(status_code=404, detail="Book not found")
 
 
-@router.get("/books", response_model=List[BookRead])
+@router.get("/books", response_model=List[BookResponse])
 async def list_books(
     current_user: Annotated[User, Depends(get_current_user)],
     db: AsyncSession = Depends(get_db),
@@ -79,18 +89,20 @@ async def list_books(
     return list(result.scalars().all())
 
 
-@router.put("/books/{book_id}", response_model=BookRead)
+@router.put("/books/{book_id}", response_model=BookResponse)
 async def update_book(
     current_user: Annotated[User, Depends(get_current_user)],
     book_id: UUID,
-    book_update: BookCreate,
+    book_update: BookUpdate,
     db: AsyncSession = Depends(get_db),
 ) -> Book:
     """Update a book."""
     query = select(Book).where(Book.id == book_id)
     result = await db.execute(query)
     if db_book := result.scalar_one_or_none():
-        for key, value in book_update.model_dump().items():
+        # Only update non-None values
+        update_data = book_update.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
             setattr(db_book, key, value)
         try:
             await db.commit()
@@ -107,7 +119,6 @@ async def delete_book(
     current_user: Annotated[User, Depends(get_current_user)],
     book_id: UUID,
     db: AsyncSession = Depends(get_db),
-
 ) -> None:
     """Delete a book."""
     query = select(Book).where(Book.id == book_id)
