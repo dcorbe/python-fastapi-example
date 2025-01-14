@@ -113,7 +113,7 @@ This will create your initial user with the specified email and password. You ca
    Development mode (with auto-reload):
    ```bash
    # Inside poetry shell
-   fastapi main.py
+   fastapi dev main.py
    ```
 
 2. Verify the setup:
