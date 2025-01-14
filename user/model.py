@@ -3,8 +3,9 @@ from datetime import datetime, UTC
 from typing import Optional
 from uuid import UUID, uuid4
 
-from sqlalchemy import String, Boolean, Integer, DateTime, Index
+from sqlalchemy import String, Boolean, Integer, DateTime, Index, select
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import func
 
 from database.models.base import Base
@@ -46,6 +47,13 @@ class User(Base):
         DateTime(timezone=True),
         nullable=True
     )
+
+    @classmethod
+    async def get_by_email(cls, db: AsyncSession, email: str) -> Optional["User"]:
+        """Get a user by their email address."""
+        query = select(cls).where(func.lower(cls.email) == email.lower())
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
 
     @property
     def is_locked(self) -> bool:

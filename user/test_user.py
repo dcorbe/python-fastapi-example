@@ -24,25 +24,52 @@ from .operations import (
 from .schemas import UserCreate, UserUpdate
 
 
+async def _clear_all_tables(session: AsyncSession) -> None:
+    """Clear all test data from tables."""
+    await session.execute(text("TRUNCATE TABLE users CASCADE"))
+    await session.commit()
+
+
 @pytest_asyncio.fixture(autouse=True)
 async def setup_test_database() -> AsyncGenerator[None, None]:
     """Setup test database environment."""
     if "TEST_DATABASE_URL" not in os.environ:
         raise ValueError("TEST_DATABASE_URL environment variable must be set")
     
-    # Use test database URL
-    os.environ["DATABASE_URL"] = os.environ["TEST_DATABASE_URL"]
-    Database.init()
+    # Store original DATABASE_URL if it exists
+    original_db_url = os.environ.get("DATABASE_URL")
     
-    # Clear test data before each test
-    async with Database.session() as session:
-        await session.execute(text("DELETE FROM users"))
-        await session.commit()
-    
-    yield
-    
-    # Cleanup after tests
-    await Database.close()
+    try:
+        # Use test database URL
+        os.environ["DATABASE_URL"] = os.environ["TEST_DATABASE_URL"]
+        Database.init()
+        
+        # Clear test data before each test
+        async with Database.session() as session:
+            await _clear_all_tables(session)
+        
+        yield
+        
+    finally:
+        # Clear all test data after each test
+        try:
+            async with Database.session() as session:
+                await _clear_all_tables(session)
+        except Exception:
+            pass  # Ensure cleanup doesn't prevent other cleanup steps
+        
+        # Close all connections
+        await Database.close()
+        
+        # Restore original DATABASE_URL if it existed
+        if original_db_url is not None:
+            os.environ["DATABASE_URL"] = original_db_url
+        else:
+            del os.environ["DATABASE_URL"]
+        
+        # Reset Database class state
+        Database._engine = None
+        Database._session_factory = None
 
 
 @pytest_asyncio.fixture
@@ -50,17 +77,20 @@ async def session() -> AsyncGenerator[AsyncSession, None]:
     """Create database session for testing."""
     async with Database.session() as session:
         yield session
+        # Ensure transaction is rolled back even if test fails
+        await session.rollback()
 
 
 @pytest_asyncio.fixture
-async def test_user(session: AsyncSession) -> User:
+async def test_user(session: AsyncSession) -> AsyncGenerator[User, None]:
     """Create a test user."""
     user_data = UserCreate(
         email="test@example.com",
         password_hash="hashed_password_123",
         email_verified=False
     )
-    return await create_user(session, user_data)
+    user = await create_user(session, user_data)
+    yield user
 
 
 @pytest.mark.asyncio
