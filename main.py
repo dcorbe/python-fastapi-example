@@ -47,6 +47,7 @@ auth_config = AuthConfig(
 )
 auth_service = setup_auth(app, auth_config)
 
+# TODO: Investigate on_event deprecation warnings emitted here
 @app.on_event("startup")
 async def startup() -> None:
     database_manager.db = await Database.connect()
@@ -68,3 +69,7 @@ async def hello() -> Dict[str, str]:
 async def test_crash() -> None:
     """This will raise a ZeroDivisionError"""
     1 / 0
+
+# Do not allow this app to be called directly from the command line
+if __name__ == "__main__":
+    raise RuntimeError("Use 'fastapi main.py' to run this application")
