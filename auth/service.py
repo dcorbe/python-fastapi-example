@@ -12,18 +12,20 @@ from passlib.exc import UnknownHashError
 from database.models import User
 from .models import AuthConfig, TokenData, LoginAttempt
 
+# Initialize CryptContext once at module level
+_pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 class AuthService:
     """Service for handling authentication and token management."""
     
     def __init__(self, config: AuthConfig):
         self.config = config
-        self._pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
         self._login_attempts: Dict[str, LoginAttempt] = {}
 
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
         """Verify a password against its hash."""
         try:
-            return self._pwd_context.verify(plain_password, hashed_password)
+            return _pwd_context.verify(plain_password, hashed_password)
         except UnknownHashError:
             raise HTTPException(
                 status_code=status.HTTP_426_UPGRADE_REQUIRED,
@@ -33,7 +35,7 @@ class AuthService:
 
     def hash_password(self, password: str) -> str:
         """Hash a password."""
-        return self._pwd_context.hash(password)
+        return _pwd_context.hash(password)
 
     def create_access_token(self, data: Dict[str, Any]) -> str:
         """Create a new JWT access token."""
