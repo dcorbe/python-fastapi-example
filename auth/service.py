@@ -6,14 +6,10 @@ from jwt.exceptions import ExpiredSignatureError, PyJWTError
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from passlib.context import CryptContext
-from passlib.exc import UnknownHashError
 
-from user.model import User  # Updated import path
+from user.model import User
 from .models import AuthConfig, TokenData, LoginAttempt
-
-# Initialize CryptContext once at module level
-_pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+from .password import hash_password, verify_password
 
 class AuthService:
     """Service for handling authentication and token management."""
@@ -25,8 +21,8 @@ class AuthService:
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
         """Verify a password against its hash."""
         try:
-            return _pwd_context.verify(plain_password, hashed_password)
-        except UnknownHashError:
+            return verify_password(plain_password, hashed_password)
+        except Exception:
             raise HTTPException(
                 status_code=status.HTTP_426_UPGRADE_REQUIRED,
                 detail="Account requires password reset",
@@ -35,7 +31,7 @@ class AuthService:
 
     def hash_password(self, password: str) -> str:
         """Hash a password."""
-        return _pwd_context.hash(password)
+        return hash_password(password)
 
     def create_access_token(self, data: Dict[str, Any]) -> str:
         """Create a new JWT access token."""
