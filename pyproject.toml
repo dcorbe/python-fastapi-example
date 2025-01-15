@@ -70,6 +70,3 @@ asyncio_mode = "strict"
 asyncio_default_fixture_loop_scope = "function"
 testpaths = ["example", "auth", "monitoring"]
 python_files = ["test_*.py"]
-filterwarnings = [
-    "ignore::DeprecationWarning:passlib.*:",
-]
