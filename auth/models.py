@@ -1,7 +1,6 @@
 """Authentication models."""
 from datetime import datetime, UTC
 from pydantic import BaseModel, Field
-from typing import Optional
 
 class AuthConfig(BaseModel):
     """Configuration for authentication system"""
@@ -18,12 +17,12 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     """JWT token payload"""
-    sub: Optional[str] = None
-    exp: Optional[datetime] = None
+    sub: str | None = None
+    exp: datetime | None = None
 
 class LoginAttempt(BaseModel):
     """Track login attempts and lockouts"""
     email: str
     attempts: int = 0
-    locked_until: Optional[datetime] = None
+    locked_until: datetime | None = None
     last_attempt: datetime = Field(default_factory=lambda: datetime.now(UTC))
