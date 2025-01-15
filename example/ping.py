@@ -1,16 +1,32 @@
-"""Ping endpoint."""
-from fastapi import APIRouter
-from pydantic import BaseModel
+"""Ping endpoint for health checking and API verification."""
+from fastapi import APIRouter, status
+from pydantic import BaseModel, Field
 
 
 class Ping(BaseModel):
-    ping: str
+    """Response model for ping endpoint."""
+    ping: str = Field(
+        default="pong",
+        description="Response message indicating API health",
+        examples=["pong"]
+    )
 
 
 router = APIRouter(tags=["example"])
 
 
-@router.get("/ping", response_model=Ping)
+@router.get(
+    "/ping",
+    response_model=Ping,
+    status_code=status.HTTP_200_OK,
+    summary="API Health Check",
+    description="Simple ping endpoint that returns 'pong' to verify API availability",
+)
 async def ping_endpoint() -> Ping:
-    """Simple ping endpoint that returns 'pong'."""
+    """
+    Perform a health check on the API.
+    
+    Returns:
+        Ping: A response object containing 'pong' to indicate the API is healthy
+    """
     return Ping(ping="pong")

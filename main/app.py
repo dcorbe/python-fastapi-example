@@ -7,6 +7,7 @@ from auth import setup_auth, AuthService, AuthConfig
 from auth.config import initialize_jwt_config, get_jwt_config, JWTConfig
 from config import Settings, get_settings
 
+
 class Application(FastAPI):
     settings: Settings | None = None
     jwt_config: JWTConfig | None = None
@@ -16,7 +17,14 @@ class Application(FastAPI):
     auth_service: AuthService | None = None
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
+        # Initialize FastAPI with just the essential OpenAPI settings
+        super().__init__(
+            *args,
+            title="BSS Backend API",
+            description="Bridge Security Solutions Backend API",
+            version="0.1.0",
+            **kwargs
+        )
         self._initialized = False
 
     def init(self) -> None:
