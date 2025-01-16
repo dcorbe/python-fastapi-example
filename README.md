@@ -1,11 +1,8 @@
 # FastAPI example application
 This is primarily a
-[FastAPI](https://github.com/fastapi/fastapi)
-application that does the following:
+[FastAPI](https://github.com/fastapi/fastapi) which is intended to be used as a teaching tool and reference for building 
+web APIs with Python.
 
-- Implements API endpoints
-- Serves media streams for video players
-- Ingests video streams from cameras and live feeds
 
 ## Table of Contents
 - [Core Dependencies](#core-dependencies)
@@ -27,7 +24,7 @@ application that does the following:
 - [**Passlib**](https://passlib.readthedocs.io/) - Password hashing library [with bcrypt]
 
 ### Database
-- [**psycopg**](https://www.psycopg.org/psycopg3/) - PostgreSQL adapter for Python
+- [**SQLAlchemy**](https://www.sqlalchemy.org/) - PostgreSQL adapter for Python
 
 ### Computer Vision and Data Processing
 - [**OpenCV**](https://opencv.org/) - Computer vision and video processing
