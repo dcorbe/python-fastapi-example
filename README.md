@@ -1,6 +1,4 @@
-# Bridge Security Solutions Backend
-This is the Bridge Security Solutions backend.  
-
+# FastAPI example application
 This is primarily a
 [FastAPI](https://github.com/fastapi/fastapi)
 application that does the following:
@@ -34,7 +32,6 @@ application that does the following:
 ### Computer Vision and Data Processing
 - [**OpenCV**](https://opencv.org/) - Computer vision and video processing
 - [**NumPy**](https://numpy.org/) - Numerical processing and array operations
-- [**bss-lib**](https://github.com/Bridge-Security-Solutions/bss-lib) - Internal library for shared functionality
 
 ### Development Tools
 - [**mypy**](https://mypy-lang.org/) - Static type checker
