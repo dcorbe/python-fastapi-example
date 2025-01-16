@@ -1,9 +1,10 @@
 """Add a user to the database."""
 
 import asyncio
+
+from auth.service import AuthConfig, AuthService
 from database import Database
 from user.model import User
-from auth.service import AuthService, AuthConfig
 
 
 async def create_user(email: str, password: str) -> None:

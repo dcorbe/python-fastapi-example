@@ -1,7 +1,8 @@
 """Unit tests for the ping endpoint."""
 
 import pytest
-from example.ping import ping_endpoint, Ping
+
+from example.ping import Ping, ping_endpoint
 
 pytestmark = pytest.mark.asyncio
 

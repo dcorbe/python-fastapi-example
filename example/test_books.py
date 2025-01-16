@@ -2,8 +2,8 @@
 
 import uuid
 from datetime import datetime, timezone
-from unittest.mock import AsyncMock, MagicMock
 from typing import AsyncGenerator, Generator
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from fastapi import HTTPException
@@ -15,13 +15,13 @@ from auth.token import get_current_user
 from database.models import Book
 from example.books import (
     BookCreate,
-    BookUpdate,
     BookResponse,
+    BookUpdate,
     create_book,
-    read_book,
-    list_books,
-    update_book,
     delete_book,
+    list_books,
+    read_book,
+    update_book,
 )
 
 pytestmark = pytest.mark.asyncio

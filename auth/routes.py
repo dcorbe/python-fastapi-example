@@ -1,6 +1,7 @@
 """Authentication routes."""
 
 from typing import Annotated
+
 from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,9 +9,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from database_manager import get_db
 from user import User
 
+from .dependencies import get_current_user
 from .models import Token
 from .service import AuthService
-from .dependencies import get_current_user
 
 
 class AuthRouter:

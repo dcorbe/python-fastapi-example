@@ -1,9 +1,9 @@
 """Database operations for user management."""
 
-from typing import Optional, List
+from typing import List, Optional
 from uuid import UUID
 
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 

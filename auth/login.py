@@ -1,18 +1,18 @@
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
-from datetime import datetime, timedelta, UTC
-from passlib.exc import UnknownHashError
-from fastapi import Depends, HTTPException, status, APIRouter
+
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
+from passlib.exc import UnknownHashError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from user import User
-from user.operations import update_user, UserUpdate
-from database_manager import get_db
 from config import get_settings
+from database_manager import get_db
+from user import User
+from user.operations import UserUpdate, update_user
 
-from .token import Token, create_access_token
 from .password import verify_password
-
+from .token import Token, create_access_token
 
 router = APIRouter()
 

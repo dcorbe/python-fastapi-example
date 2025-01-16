@@ -1,12 +1,12 @@
 """User database model definition."""
 
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from typing import Optional
 from uuid import UUID, uuid4
 
-from sqlalchemy import String, Boolean, Integer, DateTime, Index, select
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Boolean, DateTime, Index, Integer, String, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 
 from database.models.base import Base

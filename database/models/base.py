@@ -1,7 +1,7 @@
 """Base model configuration for SQLAlchemy."""
 
 from datetime import datetime
-from typing import Any, TypeVar, Type, Optional
+from typing import Any, Optional, Type, TypeVar
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession

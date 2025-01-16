@@ -1,6 +1,7 @@
 """Unit tests for the echo endpoint."""
 
 import json
+
 import pytest
 from fastapi import Request
 from fastapi.responses import JSONResponse

@@ -1,12 +1,13 @@
 """Unit tests for auth login functionality."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from auth.service import AuthService
 from auth.models import AuthConfig
+from auth.service import AuthService
 from user.model import User
 
 pytestmark = pytest.mark.asyncio

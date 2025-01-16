@@ -37,6 +37,7 @@ pytest = "^8.3.4"
 pytest-asyncio = "^0.25.2"
 httpx = "^0.27.0"
 black = "^24.3.0"
+isort = "^5.13.2"
 
 [build-system]
 requires = ["poetry-core"]
@@ -51,6 +52,17 @@ extend-exclude = '''
 # in the root of the project.
 ^/dist
 '''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+line_length = 88
+split_on_trailing_comma = true
+extend_skip = ["dist"]
 
 [tool.mypy]
 python_version = "3.12"

@@ -1,8 +1,9 @@
 """Example error handling endpoint demonstrating HTTP error responses."""
 
+from typing import Annotated
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
-from typing import Annotated
 
 
 class ExampleResponse(BaseModel):

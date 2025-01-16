@@ -1,14 +1,15 @@
-from datetime import datetime
-import traceback
-import sys
-import logging
-from typing import Any, Dict, List, Optional
 import asyncio
-import aiosmtplib
+import logging
+import sys
+import traceback
+from datetime import datetime
 from email.mime.text import MIMEText
-from fastapi import FastAPI, Request, HTTPException
+from typing import Any, Dict, List, Optional
+
+import aiosmtplib
+from email_validator import EmailNotValidError, validate_email
+from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel, field_validator
-from email_validator import validate_email, EmailNotValidError
 
 # Use INFO level by default
 logger = logging.getLogger(__name__)

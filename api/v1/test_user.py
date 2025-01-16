@@ -1,12 +1,14 @@
 """Unit tests for user endpoint functionality."""
 
-import pytest
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock
-from datetime import datetime, UTC
 from uuid import uuid4
 
-from user.schemas import UserResponse
+import pytest
+
 from user import User
+from user.schemas import UserResponse
+
 from .user import get_current_user_details
 
 pytestmark = pytest.mark.asyncio

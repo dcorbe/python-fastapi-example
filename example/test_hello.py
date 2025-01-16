@@ -2,8 +2,10 @@
 
 import uuid
 from unittest.mock import MagicMock
+
 import pytest
-from example.hello import hello_world, Hello
+
+from example.hello import Hello, hello_world
 from user import User
 
 pytestmark = pytest.mark.asyncio

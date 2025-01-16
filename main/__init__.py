@@ -1,10 +1,10 @@
-from database import Database
 from typing import Dict
 
-from .app import Application
-
-from example import router as example_router
 from api.v1 import router as api_v1_router
+from database import Database
+from example import router as example_router
+
+from .app import Application
 
 # Create an instance of the custom Application class
 app = Application()

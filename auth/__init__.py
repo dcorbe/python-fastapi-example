@@ -1,9 +1,9 @@
 from fastapi import FastAPI
 
-from .models import AuthConfig, Token, TokenData
-from .service import AuthService
-from .routes import AuthRouter
 from .dependencies import get_current_user, set_auth_service
+from .models import AuthConfig, Token, TokenData
+from .routes import AuthRouter
+from .service import AuthService
 
 
 def setup_auth(app: FastAPI, config: AuthConfig) -> AuthService:

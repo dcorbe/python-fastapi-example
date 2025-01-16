@@ -5,13 +5,13 @@ This module provides endpoints for managing user-related operations, including:
 """
 
 from typing import Annotated
+
 from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel, ConfigDict
 
 from auth.token import get_current_user
-from user.schemas import UserResponse
 from user import User
-
+from user.schemas import UserResponse
 
 router = APIRouter(
     prefix="/user",

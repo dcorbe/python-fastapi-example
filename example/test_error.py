@@ -2,6 +2,7 @@
 
 import pytest
 from fastapi import HTTPException
+
 from example.error import error_message
 
 pytestmark = pytest.mark.asyncio

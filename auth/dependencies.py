@@ -1,13 +1,15 @@
 """Authentication dependencies."""
 
 from typing import Annotated, Optional
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from database_manager import get_db
 from user.model import User  # Updated import path
+
 from .service import AuthService
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")

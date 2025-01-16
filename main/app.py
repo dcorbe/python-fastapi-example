@@ -1,11 +1,12 @@
-from typing import Dict, Any
+from typing import Any, Dict
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from monitoring import CrashReporter, setup_crash_reporting, EmailConfig
-from auth import setup_auth, AuthService, AuthConfig
-from auth.config import initialize_jwt_config, get_jwt_config, JWTConfig
+from auth import AuthConfig, AuthService, setup_auth
+from auth.config import JWTConfig, get_jwt_config, initialize_jwt_config
 from config import Settings, get_settings
+from monitoring import CrashReporter, EmailConfig, setup_crash_reporting
 
 
 class Application(FastAPI):

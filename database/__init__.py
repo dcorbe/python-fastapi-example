@@ -8,10 +8,10 @@ from typing import AsyncGenerator, Optional, Tuple
 from urllib.parse import urlparse
 
 from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
-    AsyncEngine,
 )
 
 

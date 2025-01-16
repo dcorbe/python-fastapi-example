@@ -1,26 +1,27 @@
 """User management unit tests."""
 
-from datetime import datetime, UTC, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import AsyncGenerator
 from uuid import UUID
 
 import pytest
 import pytest_asyncio
 from pydantic import ValidationError
-from sqlalchemy import text, select
+from sqlalchemy import select, text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database import Database
 from config import get_settings
+from database import Database
+
 from .model import User
 from .operations import (
+    create_user,
+    delete_user,
+    get_all_users,
     get_user_by_email,
     get_user_by_id,
-    get_all_users,
-    create_user,
     update_user,
-    delete_user,
 )
 from .schemas import UserCreate, UserUpdate
 

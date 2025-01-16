@@ -9,10 +9,11 @@ This module implements a RESTful API for managing books, including:
 All operations require authentication using JWT tokens.
 """
 
-from typing import List, Optional, Annotated
-from uuid import UUID
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, status, Path, Body
+from typing import Annotated, List, Optional
+from uuid import UUID
+
+from fastapi import APIRouter, Body, Depends, HTTPException, Path, status
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError

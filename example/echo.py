@@ -8,9 +8,10 @@ All operations require authentication using JWT tokens.
 """
 
 from typing import Annotated, Dict, Optional
-from fastapi import APIRouter, Request, Depends
+
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from auth.token import get_current_user
 from user import User

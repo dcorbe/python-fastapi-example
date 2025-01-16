@@ -6,7 +6,7 @@ The endpoint requires no authentication and is used to verify basic API connecti
 """
 
 from fastapi import APIRouter, status
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class Ping(BaseModel):

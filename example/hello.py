@@ -6,8 +6,9 @@ message along with the authenticated user's ID.
 
 from typing import Annotated
 from uuid import UUID
+
 from fastapi import APIRouter, Depends, status
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from auth.token import get_current_user
 from user import User

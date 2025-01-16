@@ -1,15 +1,17 @@
 """Authentication service."""
 
-from datetime import datetime, timedelta, UTC
-from typing import Dict, Any
+from datetime import UTC, datetime, timedelta
+from typing import Any, Dict
+
 import jwt
-from jwt.exceptions import ExpiredSignatureError, PyJWTError
 from fastapi import HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
+from jwt.exceptions import ExpiredSignatureError, PyJWTError
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from user.model import User
-from .models import AuthConfig, TokenData, LoginAttempt
+
+from .models import AuthConfig, LoginAttempt, TokenData
 from .password import hash_password, verify_password
 
 

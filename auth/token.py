@@ -1,15 +1,16 @@
 from datetime import datetime, timedelta, timezone
-from pydantic import BaseModel
-from fastapi import Depends, HTTPException, status, Security
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from typing import Annotated
-from sqlalchemy.ext.asyncio import AsyncSession
 
 import jwt
+from fastapi import Depends, HTTPException, Security, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from database_manager import get_db
 from user import User
 from user.operations import get_user_by_email
-from database_manager import get_db
+
 from .config import get_jwt_config
 
 # Security scheme for token handling

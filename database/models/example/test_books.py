@@ -7,7 +7,7 @@ from uuid import UUID
 
 import pytest
 import pytest_asyncio
-from sqlalchemy import text, select
+from sqlalchemy import select, text
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
 
