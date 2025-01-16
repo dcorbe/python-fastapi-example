@@ -51,4 +51,3 @@ Traceback (most recent call last):
    ~~^~~
 ZeroDivisionError: division by zero
 ```
-

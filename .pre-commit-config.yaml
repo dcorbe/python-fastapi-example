@@ -28,6 +28,10 @@ repos:
     -   id: end-of-file-fixer
         types_or: [python, markdown, yaml, toml]
         files: \.(py|md|yaml|yml|toml)$
+    -   id: detect-private-key
+    -   id: check-yaml
+    -   id: check-json
+    -   id: check-toml
 -   repo: local
     hooks:
     -   id: mypy
