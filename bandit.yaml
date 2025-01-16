@@ -1,0 +1,8 @@
+---
+# Skip assert statements in test files and any test credentials
+skips:
+  - B101  # assert statements
+  - B106  # hardcoded passwords in tests/tools
+exclude_dirs:
+  - tests
+  - test
