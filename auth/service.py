@@ -9,7 +9,7 @@ from jwt.exceptions import ExpiredSignatureError, PyJWTError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from user.model import User
+from v1.users.models import User
 
 from .models import AuthConfig, LoginAttempt, TokenData
 from .password import hash_password, verify_password

@@ -4,7 +4,7 @@ import asyncio
 
 from auth.service import AuthConfig, AuthService
 from database import Database
-from user.model import User
+from v1.users.models import User
 
 
 async def create_user(email: str, password: str) -> None:

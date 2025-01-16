@@ -8,11 +8,11 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
-from alembic import context
-from database.models import Base
-
 # Import all models that need to be included in migrations
 from user.model import User  # This ensures the User model is part of the metadata
+
+from alembic import context
+from database.models import Base
 
 config = context.config
 

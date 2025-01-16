@@ -1,88 +1,37 @@
-from datetime import datetime, timedelta
+"""Authentication endpoints."""
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from passlib.context import CryptContext
-from passlib.exc import UnknownHashError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
-from user import User
-from user.operations import update_user
-from user.schemas import UserUpdate
 
-from .token import Token, create_access_token
+from .dependencies import get_auth_service
+from .models import Token
+from .service import AuthService
 
 router = APIRouter()
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a plaintext password against a hash."""
-    return pwd_context.verify(plain_password, hashed_password)
 
 
 @router.post("/login", response_model=Token)
 async def login(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-    db: AsyncSession = Depends(get_db),
+    auth_service: Annotated[AuthService, Depends(get_auth_service)],
+    session: AsyncSession = Depends(get_db),
 ) -> Token:
-    u = await User.get_by_email(db, form_data.username)
-
-    if u is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    if u.is_locked:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Account is locked. Please try again later",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
+    """Login endpoint."""
     try:
-        if not verify_password(form_data.password, u.password_hash):
-            # Increment failed login attempts and check for account locking
-            u.failed_login_attempts += 1
-            if u.failed_login_attempts >= 5:  # Consider making this configurable
-                u.locked_until = datetime.now() + timedelta(minutes=15)
-
-            await update_user(
-                db,
-                u,
-                UserUpdate(
-                    failed_login_attempts=u.failed_login_attempts,
-                    locked_until=u.locked_until,
-                ),
-            )
-
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Incorrect username or password",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-    except UnknownHashError:
-        raise HTTPException(
-            status_code=status.HTTP_426_UPGRADE_REQUIRED,
-            detail="Account requires password reset",
-            headers={"WWW-Authenticate": "Bearer"},
+        user = await auth_service.authenticate_user(
+            form_data.username, form_data.password, session
         )
-
-    # Reset failed attempts on successful login
-    u.failed_login_attempts = 0
-    u.last_login = datetime.now()
-    await update_user(
-        db,
-        u,
-        UserUpdate(
-            failed_login_attempts=u.failed_login_attempts, last_login=u.last_login
-        ),
-    )
-
-    access_token = create_access_token({"sub": u.email})
-    return Token(access_token=access_token, token_type="bearer")
+        access_token = auth_service.create_access_token({"sub": user.email})
+        return Token(access_token=access_token, token_type="bearer")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e),
+        ) from e

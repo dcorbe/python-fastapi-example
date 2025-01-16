@@ -8,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
-from user.model import User  # Updated import path
+from v1.users.models import User
 
 from .service import AuthService
 

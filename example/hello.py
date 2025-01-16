@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel, ConfigDict, Field
 
 from auth.token import get_current_user
-from user import User
+from v1.users.models import User
 
 
 class Hello(BaseModel):

@@ -6,7 +6,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from example.hello import Hello, hello_world
-from user import User
+from v1.users.models import User
 
 pytestmark = pytest.mark.asyncio
 

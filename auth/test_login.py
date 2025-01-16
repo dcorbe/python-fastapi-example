@@ -7,7 +7,7 @@ from fastapi import HTTPException
 
 from auth.models import AuthConfig
 from auth.service import AuthService
-from user.model import User
+from v1.users.models import User
 
 pytestmark = pytest.mark.asyncio
 

@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from auth.token import get_current_user
 from database import get_db
 from database.models.example.books import Book as BookModel
-from user import User
+from v1.users.models import User
 
 
 # Schema definitions
