@@ -29,9 +29,7 @@ class Hello(BaseModel):
 router = APIRouter(
     tags=["example"],
     responses={
-        401: {"description": "Unauthorized - Authentication required"},
-        403: {"description": "Forbidden - Insufficient permissions"},
-        500: {"description": "Internal Server Error"}
+        403: {"detail": "Not Authenticated"},
     }
 )
 
@@ -42,10 +40,7 @@ router = APIRouter(
     status_code=status.HTTP_200_OK,
     summary="Get authenticated greeting",
     description="Returns a greeting message and the authenticated user's ID. Requires authentication.",
-    responses={
-        200: {"description": "Successfully retrieved greeting"},
-    },
-    operation_id="getHello"
+    operation_id="helloRequest"
 )
 async def hello_world(
     current_user: Annotated[User, Depends(get_current_user)]

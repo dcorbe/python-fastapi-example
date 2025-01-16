@@ -19,16 +19,7 @@ router = APIRouter(
     prefix="/error",
     tags=["example"],
     responses={
-        403: {
-            "description": "Forbidden - User is not authorized",
-            "content": {
-                "application/json": {
-                    "example": {
-                        "detail": "You are not authorized to access this resource"
-                    }
-                }
-            }
-        }
+        403: {"detail": "Not authenticated"}
     }
 )
 
@@ -38,18 +29,6 @@ router = APIRouter(
     response_model=ExampleResponse,
     summary="Example error endpoint",
     description="This endpoint demonstrates error handling by always returning a 403 Forbidden error.",
-    responses={
-        403: {
-            "description": "Forbidden - User is not authorized",
-            "content": {
-                "application/json": {
-                    "example": {
-                        "detail": "You are not authorized to access this resource"
-                    }
-                }
-            }
-        }
-    }
 )
 async def error_message() -> ExampleResponse:
     """Demonstrate error handling by raising a 403 Forbidden error.

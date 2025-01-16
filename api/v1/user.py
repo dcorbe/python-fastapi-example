@@ -16,9 +16,7 @@ router = APIRouter(
     prefix="/user",
     tags=["users"],
     responses={
-        401: {"description": "Unauthorized - Authentication required"},
-        403: {"description": "Forbidden - Insufficient permissions"},
-        500: {"description": "Internal Server Error"}
+        403: {"detail": "Not authenticated"},
     }
 )
 
