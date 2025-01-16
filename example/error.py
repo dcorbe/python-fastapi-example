@@ -1,18 +1,68 @@
-"""Example error handling endpoint."""
+"""Example error handling endpoint demonstrating HTTP error responses."""
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from typing import Annotated
 
 
 class ExampleResponse(BaseModel):
-    message: str
+    """Response model for the error endpoint."""
+    message: Annotated[str, Field(
+        default="",
+        description="Response message string",
+        json_schema_extra={
+            "example": "Success message that will never be returned"
+        }
+    )]
 
 
-router = APIRouter(tags=["example"])
+router = APIRouter(
+    prefix="/error",
+    tags=["example"],
+    responses={
+        403: {
+            "description": "Forbidden - User is not authorized",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "You are not authorized to access this resource"
+                    }
+                }
+            }
+        }
+    }
+)
 
 
-@router.get("/error", response_model=ExampleResponse)
+@router.get(
+    "",
+    response_model=ExampleResponse,
+    summary="Example error endpoint",
+    description="This endpoint demonstrates error handling by always returning a 403 Forbidden error.",
+    responses={
+        403: {
+            "description": "Forbidden - User is not authorized",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "You are not authorized to access this resource"
+                    }
+                }
+            }
+        }
+    }
+)
 async def error_message() -> ExampleResponse:
-    """Example of how to return an error message to the user."""
+    """Demonstrate error handling by raising a 403 Forbidden error.
+    
+    This endpoint is designed to show how FastAPI handles error responses.
+    It will always raise a 403 Forbidden error with a specific error message.
+    
+    Returns:
+        ExampleResponse: Never actually returns - always raises an HTTPException
+        
+    Raises:
+        HTTPException: 403 Forbidden error with a descriptive message
+    """
     raise HTTPException(
         status_code=403,
         detail="You are not authorized to access this resource"
