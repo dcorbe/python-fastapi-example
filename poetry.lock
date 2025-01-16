@@ -172,7 +172,7 @@ files = [
 
 [package.dependencies]
 colorama = {version = ">=0.3.9", markers = "platform_system == \"Windows\""}
-PyYAML = ">=5.3.1"
+PyYAML = {version = ">=5.3.1", optional = true, markers = "extra == \"yaml\""}
 rich = "*"
 stevedore = ">=1.20.0"
 
@@ -2115,4 +2115,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "2ce388378e39bf21fdcb69b0faa51bc146e30a86191b4dddbe9bb0b95a072220"
+content-hash = "dc6c0a742c1cb8531a199cc9a011b327f141ebac2735d44dd6f6a541baee2ff8"
