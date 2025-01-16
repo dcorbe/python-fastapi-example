@@ -81,12 +81,6 @@ pre-commit install
 cp .env.example .env
 
 # Edit the .env file with your desired database credentials
-# At minimum, set these variables:
-POSTGRES_USER=your_username
-POSTGRES_PASSWORD=your_secure_password
-POSTGRES_DB=bss_dev
-DATABASE_URL=postgres://your_username:your_secure_password@localhost:5432/bss_dev
-JWT_SECRET=your_secure_jwt_secret
 ```
 
 2. Start the PostgreSQL database:
