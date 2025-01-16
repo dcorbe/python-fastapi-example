@@ -16,14 +16,15 @@ from .password import verify_password
 
 router = APIRouter()
 
+
 @router.post("/login", response_model=Token)
 async def login(
-        form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-        session: AsyncSession = Depends(get_db)
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    session: AsyncSession = Depends(get_db),
 ) -> Token:
     u = await User.get_by_email(session, form_data.username)
     settings = get_settings()
-    
+
     if u is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -43,14 +44,16 @@ async def login(
             # Increment failed login attempts
             failed_attempts = u.failed_login_attempts + 1
             update_data = UserUpdate(failed_login_attempts=failed_attempts)
-            
+
             # If too many failed attempts, lock the account
             if failed_attempts >= settings.MAX_LOGIN_ATTEMPTS:
-                locked_until = datetime.now(UTC) + timedelta(minutes=settings.LOCKOUT_MINUTES)
+                locked_until = datetime.now(UTC) + timedelta(
+                    minutes=settings.LOCKOUT_MINUTES
+                )
                 update_data.locked_until = locked_until
-            
+
             await update_user(session, u, update_data)
-            
+
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Incorrect username or password",
@@ -66,12 +69,7 @@ async def login(
 
     # Reset failed attempts on successful login
     await update_user(
-        session, 
-        u, 
-        UserUpdate(
-            failed_login_attempts=0,
-            last_login=datetime.now(UTC)
-        )
+        session, u, UserUpdate(failed_login_attempts=0, last_login=datetime.now(UTC))
     )
 
     access_token = create_access_token({"sub": u.email})

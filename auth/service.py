@@ -1,4 +1,5 @@
 """Authentication service."""
+
 from datetime import datetime, timedelta, UTC
 from typing import Dict, Any
 import jwt
@@ -11,9 +12,10 @@ from user.model import User
 from .models import AuthConfig, TokenData, LoginAttempt
 from .password import hash_password, verify_password
 
+
 class AuthService:
     """Service for handling authentication and token management."""
-    
+
     def __init__(self, config: AuthConfig):
         self.config = config
         self._login_attempts: Dict[str, LoginAttempt] = {}
@@ -36,13 +38,13 @@ class AuthService:
     def create_access_token(self, data: Dict[str, Any]) -> str:
         """Create a new JWT access token."""
         to_encode = data.copy()
-        expire = datetime.now(UTC) + timedelta(minutes=self.config.access_token_expire_minutes)
+        expire = datetime.now(UTC) + timedelta(
+            minutes=self.config.access_token_expire_minutes
+        )
         to_encode.update({"exp": expire})
-        
+
         return jwt.encode(
-            to_encode,
-            self.config.jwt_secret_key,
-            algorithm=self.config.jwt_algorithm
+            to_encode, self.config.jwt_secret_key, algorithm=self.config.jwt_algorithm
         )
 
     def decode_token(self, token: str) -> TokenData:
@@ -51,7 +53,7 @@ class AuthService:
             payload = jwt.decode(
                 token,
                 self.config.jwt_secret_key,
-                algorithms=[self.config.jwt_algorithm]
+                algorithms=[self.config.jwt_algorithm],
             )
             return TokenData(**payload)
         except ExpiredSignatureError:
@@ -68,10 +70,7 @@ class AuthService:
             )
 
     async def authenticate_user(
-        self,
-        email: str,
-        password: str,
-        session: AsyncSession
+        self, email: str, password: str, session: AsyncSession
     ) -> User:
         """Authenticate a user."""
         # Check for account lockout
@@ -86,7 +85,7 @@ class AuthService:
         stmt = select(User).where(User.email.ilike(email))
         result = await session.execute(stmt)
         user = result.scalar_one_or_none()
-        
+
         if not user:
             self._record_failed_attempt(email)
             raise HTTPException(
@@ -106,11 +105,11 @@ class AuthService:
 
         # Clear failed attempts on success
         self._clear_failed_attempts(email)
-        
+
         # Update last login
         user.last_login = datetime.now(UTC)
         await session.commit()
-        
+
         return user
 
     def _is_account_locked(self, email: str) -> bool:
@@ -118,10 +117,10 @@ class AuthService:
         attempt = self._login_attempts.get(email)
         if not attempt:
             return False
-        
+
         if attempt.locked_until and datetime.now(UTC) < attempt.locked_until:
             return True
-        
+
         return False
 
     def _record_failed_attempt(self, email: str) -> None:
@@ -129,12 +128,12 @@ class AuthService:
         attempt = self._login_attempts.get(email, LoginAttempt(email=email))
         attempt.attempts += 1
         attempt.last_attempt = datetime.now(UTC)
-        
+
         if attempt.attempts >= self.config.max_login_attempts:
             attempt.locked_until = datetime.now(UTC) + timedelta(
                 minutes=self.config.lockout_minutes
             )
-        
+
         self._login_attempts[email] = attempt
 
     def _clear_failed_attempts(self, email: str) -> None:

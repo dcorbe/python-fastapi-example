@@ -1,4 +1,5 @@
 """User management unit tests."""
+
 from datetime import datetime, UTC, timedelta
 from typing import AsyncGenerator
 from uuid import UUID
@@ -19,7 +20,7 @@ from .operations import (
     get_all_users,
     create_user,
     update_user,
-    delete_user
+    delete_user,
 )
 from .schemas import UserCreate, UserUpdate
 
@@ -45,15 +46,14 @@ async def test_user(session: AsyncSession) -> User:
     user_data = UserCreate(
         email="test@example.com",
         password_hash="hashed_password_123",
-        email_verified=False
+        email_verified=False,
     )
 
     # Clear any existing test user
     await session.execute(
-        text("DELETE FROM users WHERE email = :email"),
-        {"email": user_data.email}
+        text("DELETE FROM users WHERE email = :email"), {"email": user_data.email}
     )
-    
+
     user = await create_user(session, user_data)
     return user
 
@@ -65,7 +65,7 @@ async def test_create_user(session: AsyncSession) -> None:
         email="create_test@example.com",
         password_hash="hashed_password_123",
     )
-    
+
     user = await create_user(session, user_data)
     assert user.id is not None
     assert user.email == user_data.email
@@ -84,14 +84,16 @@ async def test_get_user(session: AsyncSession, test_user: User) -> None:
     user = await get_user_by_email(session, test_user.email)
     assert user is not None
     assert user.id == test_user.id
-    
+
     # Test get by ID
     user = await get_user_by_id(session, test_user.id)
     assert user is not None
     assert user.email == test_user.email
-    
+
     # Test case-insensitive email lookup
-    user = await get_user_by_email(session, test_user.email.upper(), case_insensitive=True)
+    user = await get_user_by_email(
+        session, test_user.email.upper(), case_insensitive=True
+    )
     assert user is not None
     assert user.id == test_user.id
 
@@ -103,13 +105,13 @@ async def test_update_user(session: AsyncSession, test_user: User) -> None:
     update_data = UserUpdate(email_verified=True)
     updated_user = await update_user(session, test_user, update_data)
     assert updated_user.email_verified is True
-    
+
     # Update email
     new_email = "new@example.com"
     update_data = UserUpdate(email=new_email)
     updated_user = await update_user(session, updated_user, update_data)
     assert updated_user.email == new_email
-    
+
     # Verify old email doesn't exist
     old_user = await get_user_by_email(session, "test@example.com")
     assert old_user is None
@@ -119,7 +121,7 @@ async def test_update_user(session: AsyncSession, test_user: User) -> None:
 async def test_delete_user(session: AsyncSession, test_user: User) -> None:
     """Test user deletion."""
     await delete_user(session, test_user)
-    
+
     # Verify user is deleted
     deleted_user = await get_user_by_id(session, test_user.id)
     assert deleted_user is None
@@ -134,10 +136,7 @@ async def test_get_all_users(session: AsyncSession) -> None:
 
     # Create multiple users with unique emails
     users_data = [
-        UserCreate(
-            email=f"test{i}@unique.example.com",
-            password_hash=f"hash{i}"
-        )
+        UserCreate(email=f"test{i}@unique.example.com", password_hash=f"hash{i}")
         for i in range(3)
     ]
 
@@ -162,25 +161,21 @@ async def test_user_constraints(session: AsyncSession) -> None:
     """Test database constraints and validation."""
     email = "constraint_test@example.com"
     # Clean up any existing test data
-    await session.execute(text("DELETE FROM users WHERE email = :email"), {"email": email})
+    await session.execute(
+        text("DELETE FROM users WHERE email = :email"), {"email": email}
+    )
     await session.commit()
 
     # Test duplicate email
-    user_data = UserCreate(
-        email=email,
-        password_hash="hash1"
-    )
+    user_data = UserCreate(email=email, password_hash="hash1")
     await create_user(session, user_data)
-    
+
     with pytest.raises(IntegrityError):
         await create_user(session, user_data)
-    
+
     # Test invalid email format
     with pytest.raises(ValidationError):
-        UserCreate(
-            email="not-an-email",
-            password_hash="hash"
-        )
+        UserCreate(email="not-an-email", password_hash="hash")
 
 
 @pytest.mark.asyncio
@@ -188,26 +183,20 @@ async def test_user_locking(session: AsyncSession, test_user: User) -> None:
     """Test user locking functionality."""
     # Initially not locked
     assert not test_user.is_locked
-    
+
     # Lock the user
     lock_time = datetime.now(UTC) + timedelta(minutes=30)
-    update_data = UserUpdate(
-        failed_login_attempts=3,
-        locked_until=lock_time
-    )
+    update_data = UserUpdate(failed_login_attempts=3, locked_until=lock_time)
     locked_user = await update_user(session, test_user, update_data)
-    
+
     # Verify lock
     assert locked_user.is_locked
     assert locked_user.failed_login_attempts == 3
-    
+
     # Unlock the user
-    update_data = UserUpdate(
-        failed_login_attempts=0,
-        locked_until=None
-    )
+    update_data = UserUpdate(failed_login_attempts=0, locked_until=None)
     unlocked_user = await update_user(session, locked_user, update_data)
-    
+
     # Verify unlock
     assert not unlocked_user.is_locked
     assert unlocked_user.failed_login_attempts == 0

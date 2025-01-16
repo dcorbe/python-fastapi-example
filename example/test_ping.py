@@ -1,4 +1,5 @@
 """Unit tests for the ping endpoint."""
+
 import pytest
 from example.ping import ping_endpoint, Ping
 

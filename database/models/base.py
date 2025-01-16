@@ -1,4 +1,5 @@
 """Base model configuration for SQLAlchemy."""
+
 from datetime import datetime
 from typing import Any, TypeVar, Type, Optional
 from uuid import UUID
@@ -9,15 +10,12 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 T = TypeVar("T", bound="Base")
 
+
 class Base(DeclarativeBase):
     """Base class for all SQLAlchemy models."""
 
     @classmethod
-    async def get_by_id(
-        cls: Type[T], 
-        session: AsyncSession, 
-        id: UUID
-    ) -> Optional[T]:
+    async def get_by_id(cls: Type[T], session: AsyncSession, id: UUID) -> Optional[T]:
         """Fetch a record by its ID."""
         stmt = select(cls).where(cls.id == id)
         result = await session.execute(stmt)
@@ -25,11 +23,11 @@ class Base(DeclarativeBase):
 
     @classmethod
     async def get_by_field(
-        cls: Type[T], 
-        session: AsyncSession, 
-        field: str, 
+        cls: Type[T],
+        session: AsyncSession,
+        field: str,
         value: Any,
-        case_insensitive: bool = False
+        case_insensitive: bool = False,
     ) -> Optional[T]:
         """Fetch a record by a specific field value."""
         column = getattr(cls, field)
@@ -40,5 +38,7 @@ class Base(DeclarativeBase):
         result = await session.execute(stmt)
         return result.scalar_one_or_none()
 
-    id: Mapped[UUID] = mapped_column(primary_key=True, server_default="gen_random_uuid()")
+    id: Mapped[UUID] = mapped_column(
+        primary_key=True, server_default="gen_random_uuid()"
+    )
     created_at: Mapped[datetime] = mapped_column(server_default="CURRENT_TIMESTAMP")

@@ -1,4 +1,5 @@
 """Unit tests for user endpoint functionality."""
+
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 from datetime import datetime, UTC
@@ -28,7 +29,7 @@ def mock_user() -> MagicMock:
 async def test_user_endpoint_success(mock_user: MagicMock) -> None:
     """Test successful user info retrieval."""
     result = await get_current_user_details(mock_user)
-    
+
     assert result is not None
     assert result.id == mock_user.id
     assert result.email == mock_user.email
@@ -37,11 +38,14 @@ async def test_user_endpoint_success(mock_user: MagicMock) -> None:
     assert result.last_login == mock_user.last_login
 
 
-@pytest.mark.parametrize("field,value", [
-    ("email", "new@example.com"),
-    ("email_verified", False),
-    ("failed_login_attempts", 3),
-])
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("email", "new@example.com"),
+        ("email_verified", False),
+        ("failed_login_attempts", 3),
+    ],
+)
 async def test_user_endpoint_field_changes(
     mock_user: MagicMock,
     field: str,
@@ -50,5 +54,5 @@ async def test_user_endpoint_field_changes(
     """Test that endpoint correctly reflects user field changes."""
     setattr(mock_user, field, value)
     result = await get_current_user_details(mock_user)
-    
+
     assert getattr(result, field) == value

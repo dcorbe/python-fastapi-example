@@ -4,21 +4,23 @@ This module provides a simple health check endpoint that returns a "pong"
 response, useful for monitoring and verifying API availability.
 The endpoint requires no authentication and is used to verify basic API connectivity.
 """
+
 from fastapi import APIRouter, status
 from pydantic import BaseModel, Field, ConfigDict
 
 
 class Ping(BaseModel):
     """Response model for ping endpoint."""
+
     ping: str = Field(
         default="pong",
         description="Response message indicating API health. Always returns 'pong' when the API is healthy.",
-        examples=["pong"]
+        examples=["pong"],
     )
     status: str = Field(
         default="healthy",
         description="Status of the API health check",
-        examples=["healthy"]
+        examples=["healthy"],
     )
 
     model_config = ConfigDict(from_attributes=True)
@@ -44,24 +46,19 @@ router = APIRouter(tags=["example"])
         200: {
             "description": "API is healthy and responding normally",
             "content": {
-                "application/json": {
-                    "example": {
-                        "ping": "pong",
-                        "status": "healthy"
-                    }
-                }
-            }
+                "application/json": {"example": {"ping": "pong", "status": "healthy"}}
+            },
         }
     },
-    operation_id="pingRequest"
+    operation_id="pingRequest",
 )
 async def ping_endpoint() -> Ping:
     """Perform a health check on the API.
-    
+
     Returns:
         Ping: A response object containing 'pong' and status information
         indicating the API is healthy
-        
+
     Note:
         This endpoint is designed to be lightweight and fast-responding.
         It does not check database connectivity or other external services.

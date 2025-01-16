@@ -1,4 +1,5 @@
 """Example endpoints."""
+
 from fastapi import APIRouter
 
 from .books import router as book_router

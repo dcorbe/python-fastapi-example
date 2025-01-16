@@ -1,4 +1,5 @@
 """Password hashing and verification utilities."""
+
 import bcrypt
 
 
@@ -14,8 +15,8 @@ def hash_password(password: str) -> str:
     """
     # Generate salt and hash password
     salt = bcrypt.gensalt(rounds=12)  # 12 rounds is a good default
-    hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
-    return hashed.decode('utf-8')
+    hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
+    return hashed.decode("utf-8")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -30,6 +31,5 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         True if password matches hash, False otherwise
     """
     return bcrypt.checkpw(
-        plain_password.encode('utf-8'),
-        hashed_password.encode('utf-8')
+        plain_password.encode("utf-8"), hashed_password.encode("utf-8")
     )

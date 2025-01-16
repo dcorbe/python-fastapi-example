@@ -1,4 +1,5 @@
 """Unit tests for the hello endpoint."""
+
 import uuid
 from unittest.mock import MagicMock
 import pytest
@@ -19,7 +20,7 @@ def mock_user() -> MagicMock:
 async def test_hello_world(mock_user: MagicMock) -> None:
     """Test the hello world endpoint returns correct message and user ID."""
     result = await hello_world(mock_user)
-    
+
     assert isinstance(result, Hello)
     assert result.message == "This is a protected endpoint"
     assert result.user_id == mock_user.id

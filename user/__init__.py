@@ -1,4 +1,5 @@
 """User management module."""
+
 from .model import User
 from .operations import (
     get_user_by_email,
@@ -13,13 +14,11 @@ from .schemas import UserBase, UserCreate, UserResponse, UserUpdate
 __all__ = [
     # Models
     "User",
-    
     # Schemas
     "UserBase",
     "UserCreate",
     "UserResponse",
     "UserUpdate",
-    
     # Operations
     "get_user_by_email",
     "get_user_by_id",

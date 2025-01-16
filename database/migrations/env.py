@@ -1,4 +1,5 @@
 """Alembic environment configuration."""
+
 import asyncio
 import os
 from logging.config import fileConfig
@@ -11,6 +12,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 from database.models import Base
+
 # Import all models that need to be included in migrations
 from user.model import User  # This ensures the User model is part of the metadata
 
@@ -21,6 +23,7 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
+
 def get_url() -> str:
     """Get database URL from environment."""
     url = os.getenv("DATABASE_URL")
@@ -29,6 +32,7 @@ def get_url() -> str:
     if url.startswith("postgresql://"):
         url = url.replace("postgresql://", "postgresql+asyncpg://")
     return url
+
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode."""
@@ -43,12 +47,13 @@ def run_migrations_offline() -> None:
     with context.begin_transaction():
         context.run_migrations()
 
+
 async def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
     configuration = config.get_section(config.config_ini_section)
     if configuration is None:
         raise ValueError("No configuration found")
-        
+
     configuration["sqlalchemy.url"] = get_url()
 
     connectable = async_engine_from_config(
@@ -62,20 +67,21 @@ async def run_migrations_online() -> None:
 
     await connectable.dispose()
 
+
 def do_run_migrations(connection: Connection) -> None:
     """Run migrations."""
     context.configure(
-        connection=connection,
-        target_metadata=target_metadata,
-        compare_type=True
+        connection=connection, target_metadata=target_metadata, compare_type=True
     )
-    
+
     with context.begin_transaction():
         context.run_migrations()
+
 
 def run_async_migrations() -> None:
     """Entry point for running migrations."""
     asyncio.run(run_migrations_online())
+
 
 if context.is_offline_mode():
     run_migrations_offline()

@@ -1,4 +1,5 @@
 """Book model for example purposes."""
+
 from datetime import datetime
 from typing import Optional
 from sqlalchemy import String
@@ -9,6 +10,7 @@ from ..base import Base
 
 class Book(Base):
     """Book database model."""
+
     __tablename__ = "books"
 
     title: Mapped[str] = mapped_column(String(100))

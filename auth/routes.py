@@ -1,4 +1,5 @@
 """Authentication routes."""
+
 from typing import Annotated
 from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
@@ -11,15 +12,16 @@ from .models import Token
 from .service import AuthService
 from .dependencies import get_current_user
 
+
 class AuthRouter:
     """Router for authentication endpoints."""
-    
+
     def __init__(self, auth_service: AuthService):
         self.auth_service = auth_service
         self.router = APIRouter(
             prefix="/auth",
             tags=["authentication"],
-            responses={401: {"description": "Invalid credentials"}}
+            responses={401: {"description": "Invalid credentials"}},
         )
         self._setup_routes()
 
@@ -37,27 +39,23 @@ class AuthRouter:
                         "application/json": {
                             "example": {
                                 "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-                                "token_type": "bearer"
+                                "token_type": "bearer",
                             }
                         }
-                    }
+                    },
                 }
             },
-            operation_id="loginUser"
+            operation_id="loginUser",
         )
         async def login(
             form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-            db: AsyncSession = Depends(get_db)
+            db: AsyncSession = Depends(get_db),
         ) -> Token:
             """Login endpoint."""
             user = await self.auth_service.authenticate_user(
-                form_data.username,
-                form_data.password,
-                db
+                form_data.username, form_data.password, db
             )
-            
-            access_token = self.auth_service.create_access_token(
-                {"sub": user.email}
-            )
-            
+
+            access_token = self.auth_service.create_access_token({"sub": user.email})
+
             return Token(access_token=access_token, token_type="bearer")

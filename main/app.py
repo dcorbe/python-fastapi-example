@@ -23,7 +23,7 @@ class Application(FastAPI):
             title="BSS Backend API",
             description="Bridge Security Solutions Backend API",
             version="0.1.0",
-            **kwargs
+            **kwargs,
         )
         self._initialized = False
 
@@ -54,7 +54,7 @@ class Application(FastAPI):
             jwt_algorithm=self.settings.JWT_ALGORITHM,
             access_token_expire_minutes=self.settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES,
             max_login_attempts=self.settings.MAX_LOGIN_ATTEMPTS,
-            lockout_minutes=self.settings.LOCKOUT_MINUTES
+            lockout_minutes=self.settings.LOCKOUT_MINUTES,
         )
         self.auth_service = setup_auth(self, self.auth_config)
 

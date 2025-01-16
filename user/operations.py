@@ -1,4 +1,5 @@
 """Database operations for user management."""
+
 from typing import Optional, List
 from uuid import UUID
 
@@ -13,11 +14,11 @@ from .schemas import UserCreate, UserUpdate
 async def email_exists(db: AsyncSession, email: str) -> bool:
     """
     Check if an email already exists (case-insensitive).
-    
+
     Args:
         db: Database session
         email: Email to check
-    
+
     Returns:
         True if email exists, False otherwise
     """
@@ -33,12 +34,12 @@ async def get_user_by_email(
 ) -> Optional[User]:
     """
     Get user by email.
-    
+
     Args:
         db: Database session
         email: Email address to search for
         case_insensitive: Whether to perform case-insensitive search
-    
+
     Returns:
         User if found, None otherwise
     """
@@ -47,7 +48,7 @@ async def get_user_by_email(
         stmt = stmt.where(func.lower(User.email) == func.lower(email))
     else:
         stmt = stmt.where(User.email == email)
-    
+
     result = await db.execute(stmt)
     return result.scalar_one_or_none()
 
@@ -58,11 +59,11 @@ async def get_user_by_id(
 ) -> Optional[User]:
     """
     Get user by ID.
-    
+
     Args:
         db: Database session
         user_id: User's UUID
-    
+
     Returns:
         User if found, None otherwise
     """
@@ -79,12 +80,12 @@ async def get_all_users(
 ) -> List[User]:
     """
     Get all users with optional pagination.
-    
+
     Args:
         db: Database session
         limit: Maximum number of users to return
         offset: Number of users to skip
-    
+
     Returns:
         List of users
     """
@@ -93,7 +94,7 @@ async def get_all_users(
         stmt = stmt.limit(limit)
     if offset is not None:
         stmt = stmt.offset(offset)
-    
+
     result = await db.execute(stmt)
     return list(result.scalars().all())
 
@@ -104,14 +105,14 @@ async def create_user(
 ) -> User:
     """
     Create a new user.
-    
+
     Args:
         db: Database session
         user: User creation data
-    
+
     Returns:
         Created user
-    
+
     Raises:
         IntegrityError: If user with same email already exists
     """
@@ -119,9 +120,9 @@ async def create_user(
         raise IntegrityError(
             "User with this email already exists",
             params={"email": user.email},
-            orig=Exception("Email already exists")
+            orig=Exception("Email already exists"),
         )
-    
+
     db_user = User(**user.model_dump())
     db.add(db_user)
     try:
@@ -133,7 +134,7 @@ async def create_user(
         raise IntegrityError(
             "User with this email already exists",
             params=e.params,
-            orig=e if e.orig is None else e.orig
+            orig=e if e.orig is None else e.orig,
         ) from e
 
 
@@ -144,32 +145,32 @@ async def update_user(
 ) -> User:
     """
     Update user data.
-    
+
     Args:
         db: Database session
         db_user: Existing user to update
         user_update: Update data
-    
+
     Returns:
         Updated user
-    
+
     Raises:
         IntegrityError: If updating email to one that already exists
     """
     update_data = user_update.model_dump(exclude_unset=True)
-    
+
     # Check email uniqueness if email is being updated
     if "email" in update_data and update_data["email"] != db_user.email:
         if await email_exists(db, update_data["email"]):
             raise IntegrityError(
                 "Email address already taken",
                 params={"email": update_data["email"]},
-                orig=Exception("Email already taken")
+                orig=Exception("Email already taken"),
             )
-    
+
     for key, value in update_data.items():
         setattr(db_user, key, value)
-    
+
     try:
         await db.commit()
         await db.refresh(db_user)
@@ -179,7 +180,7 @@ async def update_user(
         raise IntegrityError(
             "Email address already taken",
             params=e.params,
-            orig=e if e.orig is None else e.orig
+            orig=e if e.orig is None else e.orig,
         ) from e
 
 
@@ -189,11 +190,11 @@ async def delete_user(
 ) -> None:
     """
     Delete user.
-    
+
     Args:
         db: Database session
         user: User to delete
-    
+
     Raises:
         IntegrityError: If user cannot be deleted due to foreign key constraints
     """
@@ -205,5 +206,5 @@ async def delete_user(
         raise IntegrityError(
             "Cannot delete user due to existing references",
             params=e.params,
-            orig=e if e.orig is None else e.orig
+            orig=e if e.orig is None else e.orig,
         ) from e

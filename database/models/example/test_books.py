@@ -1,4 +1,5 @@
 """Test suite for Book model."""
+
 import os
 from datetime import datetime
 from typing import AsyncGenerator
@@ -17,7 +18,9 @@ from database.models.example.books import Book
 async def _clear_database(session: AsyncSession) -> None:
     """Reset the database to a clean state."""
     await session.execute(text("DROP TABLE IF EXISTS books CASCADE"))
-    await session.execute(text("""
+    await session.execute(
+        text(
+            """
         CREATE TABLE books (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             title VARCHAR(100) NOT NULL,
@@ -25,7 +28,9 @@ async def _clear_database(session: AsyncSession) -> None:
             description VARCHAR(500),
             created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
         )
-    """))
+    """
+        )
+    )
     await session.commit()
 
 
@@ -34,35 +39,35 @@ async def setup_test_database() -> AsyncGenerator[None, None]:
     """Setup test database environment."""
     if "TEST_DATABASE_URL" not in os.environ:
         raise ValueError("TEST_DATABASE_URL environment variable must be set")
-    
+
     # Store original DATABASE_URL if it exists
     original_db_url = os.environ.get("DATABASE_URL")
-    
+
     try:
         # Use test database URL
         os.environ["DATABASE_URL"] = os.environ["TEST_DATABASE_URL"]
         Database.init()
-        
+
         # Clear test data before each test
         async with Database.session() as session:
             await _clear_database(session)
-        
+
         yield
-        
+
     finally:
         # Clear all test data after each test
         async with Database.session() as session:
             await _clear_database(session)
-            
+
         # Close all connections
         await Database.close()
-        
+
         # Restore original DATABASE_URL if it existed
         if original_db_url is not None:
             os.environ["DATABASE_URL"] = original_db_url
         else:
             del os.environ["DATABASE_URL"]
-        
+
         # Reset Database class state
         Database._engine = None
         Database._session_factory = None
@@ -78,11 +83,7 @@ async def session() -> AsyncGenerator[AsyncSession, None]:
 @pytest_asyncio.fixture
 async def test_book(session: AsyncSession) -> AsyncGenerator[Book, None]:
     """Create a test book."""
-    book = Book(
-        title="Test Book",
-        author="Test Author",
-        description="Test Description"
-    )
+    book = Book(title="Test Book", author="Test Author", description="Test Description")
     session.add(book)
     await session.commit()
     await session.refresh(book)
@@ -95,7 +96,7 @@ async def test_create_book(session: AsyncSession) -> None:
     book = Book(
         title="The Great Test",
         author="Testing Author",
-        description="A book about testing"
+        description="A book about testing",
     )
     session.add(book)
     await session.commit()
@@ -111,10 +112,7 @@ async def test_create_book(session: AsyncSession) -> None:
 @pytest.mark.asyncio
 async def test_create_book_without_description(session: AsyncSession) -> None:
     """Test book creation without optional description."""
-    book = Book(
-        title="No Description",
-        author="Minimalist Author"
-    )
+    book = Book(title="No Description", author="Minimalist Author")
     session.add(book)
     await session.commit()
     await session.refresh(book)
@@ -146,10 +144,7 @@ async def test_get_book_by_field(session: AsyncSession, test_book: Book) -> None
 
     # Test case-insensitive search
     book = await Book.get_by_field(
-        session, 
-        "title", 
-        test_book.title.upper(), 
-        case_insensitive=True
+        session, "title", test_book.title.upper(), case_insensitive=True
     )
     assert book is not None
     assert book.id == test_book.id
@@ -200,9 +195,9 @@ async def test_get_multiple_books(session: AsyncSession) -> None:
     books_data = [
         ("Book 1", "Author 1", "Description 1"),
         ("Book 2", "Author 2", "Description 2"),
-        ("Book 3", "Author 3", "Description 3")
+        ("Book 3", "Author 3", "Description 3"),
     ]
-    
+
     for title, author, description in books_data:
         book = Book(title=title, author=author, description=description)
         session.add(book)
@@ -222,10 +217,7 @@ async def test_field_constraints(session: AsyncSession) -> None:
     """Test database field constraints."""
     # Test title length constraint
     long_title = "x" * 101  # Exceeds VARCHAR(100)
-    book = Book(
-        title=long_title,
-        author="Test Author"
-    )
+    book = Book(title=long_title, author="Test Author")
     session.add(book)
     with pytest.raises((DBAPIError)):
         await session.commit()
@@ -233,10 +225,7 @@ async def test_field_constraints(session: AsyncSession) -> None:
 
     # Test author length constraint
     long_author = "x" * 101  # Exceeds VARCHAR(100)
-    book = Book(
-        title="Test Title",
-        author=long_author
-    )
+    book = Book(title="Test Title", author=long_author)
     session.add(book)
     with pytest.raises((DBAPIError)):
         await session.commit()
@@ -244,11 +233,7 @@ async def test_field_constraints(session: AsyncSession) -> None:
 
     # Test description length constraint
     long_description = "x" * 501  # Exceeds VARCHAR(500)
-    book = Book(
-        title="Test Title",
-        author="Test Author",
-        description=long_description
-    )
+    book = Book(title="Test Title", author="Test Author", description=long_description)
     session.add(book)
     with pytest.raises((DBAPIError)):
         await session.commit()

@@ -6,6 +6,7 @@ how requests are received by the API.
 
 All operations require authentication using JWT tokens.
 """
+
 from typing import Annotated, Dict, Optional
 from fastapi import APIRouter, Request, Depends
 from fastapi.responses import JSONResponse
@@ -17,37 +18,34 @@ from user import User
 
 class EchoResponse(BaseModel):
     """Schema for the echo response containing request details."""
+
     headers: Dict[str, str] = Field(
         description="HTTP headers from the original request",
-        examples=[{
-            "content-type": "application/json",
-            "authorization": "Bearer eyJhbGc...",
-            "accept": "application/json"
-        }]
+        examples=[
+            {
+                "content-type": "application/json",
+                "authorization": "Bearer eyJhbGc...",
+                "accept": "application/json",
+            }
+        ],
     )
     method: str = Field(
-        description="HTTP method used in the request",
-        examples=["POST"]
+        description="HTTP method used in the request", examples=["POST"]
     )
     url: str = Field(
         description="Complete URL of the request",
-        examples=["http://localhost:8000/echo"]
+        examples=["http://localhost:8000/echo"],
     )
     body: Optional[str] = Field(
         default=None,
         description="Request body content, if any",
-        examples=['{"message": "Hello, World!"}']
+        examples=['{"message": "Hello, World!"}'],
     )
 
     model_config = ConfigDict(from_attributes=True)
 
 
-router = APIRouter(
-    tags=["example"],
-    responses={
-        403: {"detail": "Not authenticated"}
-    }
-)
+router = APIRouter(tags=["example"], responses={403: {"detail": "Not authenticated"}})
 
 
 @router.post(
@@ -64,37 +62,38 @@ router = APIRouter(
                         "headers": {
                             "content-type": "application/json",
                             "authorization": "Bearer eyJhbGc...",
-                            "accept": "application/json"
+                            "accept": "application/json",
                         },
                         "method": "POST",
                         "url": "http://localhost:8000/echo",
-                        "body": '{"message": "Hello, World!"}'
+                        "body": '{"message": "Hello, World!"}',
                     }
                 }
-            }
+            },
         }
     },
-    operation_id="echoRequest"
+    operation_id="echoRequest",
 )
 async def echo(
-    request: Request,
-    user: Annotated[User, Depends(get_current_user)]
+    request: Request, user: Annotated[User, Depends(get_current_user)]
 ) -> JSONResponse:
     """Echo back the request information.
-    
+
     Args:
         request: The incoming FastAPI request object containing all request details
         user: The authenticated user making the request
-        
+
     Returns:
         JSONResponse containing the echoed request data including headers, method,
         URL, and body content
     """
     body = await request.body()
-    
-    return JSONResponse(content={
-        "headers": dict(request.headers),
-        "method": request.method,
-        "url": str(request.url),
-        "body": body.decode() if body else None
-    })
+
+    return JSONResponse(
+        content={
+            "headers": dict(request.headers),
+            "method": request.method,
+            "url": str(request.url),
+            "body": body.decode() if body else None,
+        }
+    )

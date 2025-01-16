@@ -15,30 +15,34 @@ from .config import get_jwt_config
 # Security scheme for token handling
 security = HTTPBearer()
 
+
 class Token(BaseModel):
     access_token: str
     token_type: str
 
+
 class TokenData(BaseModel):
     username: str | None = None
+
 
 def create_access_token(data: dict) -> str:
     config = get_jwt_config()
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(minutes=config.access_token_expire_minutes)
+    expire = datetime.now(timezone.utc) + timedelta(
+        minutes=config.access_token_expire_minutes
+    )
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, config.secret_key, algorithm=config.algorithm)
 
+
 async def get_current_user(
     credentials: Annotated[HTTPAuthorizationCredentials, Security(security)],
-    session: AsyncSession = Depends(get_db)
+    session: AsyncSession = Depends(get_db),
 ) -> User:
     config = get_jwt_config()
     try:
         payload = jwt.decode(
-            credentials.credentials, 
-            config.secret_key, 
-            algorithms=[config.algorithm]
+            credentials.credentials, config.secret_key, algorithms=[config.algorithm]
         )
         username: str | None = payload.get("sub")
         if username is None:
@@ -47,7 +51,7 @@ async def get_current_user(
                 detail="Could not validate credentials",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        
+
         # Exit early if no username
         if username is None:
             raise HTTPException(
@@ -55,7 +59,7 @@ async def get_current_user(
                 detail="Could not validate credentials",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-            
+
         user = await get_user_by_email(session, username)
         if user is None:
             raise HTTPException(

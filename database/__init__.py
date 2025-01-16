@@ -1,4 +1,5 @@
 """Database connection and session management."""
+
 from __future__ import annotations
 
 import os
@@ -10,12 +11,13 @@ from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
-    AsyncEngine
+    AsyncEngine,
 )
+
 
 class Database:
     """Database connection manager."""
-    
+
     _engine: Optional[AsyncEngine] = None
     _session_factory: Optional[async_sessionmaker[AsyncSession]] = None
 
@@ -23,13 +25,13 @@ class Database:
     def _convert_database_url(url: str) -> str:
         """Convert standard postgres URL to asyncpg format."""
         parsed = urlparse(url)
-        
+
         # Handle different prefix formats
-        if parsed.scheme in ('postgresql', 'postgres'):
-            scheme = 'postgresql+asyncpg'
+        if parsed.scheme in ("postgresql", "postgres"):
+            scheme = "postgresql+asyncpg"
         else:
             raise ValueError(f"Unsupported database scheme: {parsed.scheme}")
-            
+
         # Reconstruct the URL with the new scheme
         return url.replace(f"{parsed.scheme}://", f"{scheme}://", 1)
 
@@ -39,11 +41,13 @@ class Database:
         url = os.getenv("DATABASE_URL")
         if url is None:
             raise ValueError("DATABASE_URL environment variable must be set")
-        
+
         # Convert URL to asyncpg format
         try:
             sql_url = cls._convert_database_url(url)
-            print(f"Using SQLAlchemy URL: {sql_url}")  # Safe to print entire URL here as it will be masked by logs
+            print(
+                f"Using SQLAlchemy URL: {sql_url}"
+            )  # Safe to print entire URL here as it will be masked by logs
         except ValueError as e:
             raise ValueError(f"Invalid database URL: {str(e)}")
 
@@ -52,13 +56,11 @@ class Database:
             echo=False,  # Enable SQL logging
             pool_pre_ping=True,
             pool_size=5,
-            max_overflow=10
+            max_overflow=10,
         )
-        
+
         cls._session_factory = async_sessionmaker(
-            cls._engine,
-            class_=AsyncSession,
-            expire_on_commit=False
+            cls._engine, class_=AsyncSession, expire_on_commit=False
         )
 
     @classmethod
@@ -69,7 +71,7 @@ class Database:
             cls.init()
             if cls._session_factory is None:
                 raise RuntimeError("Failed to initialize database")
-        
+
         assert cls._session_factory is not None  # For type checker
         async with cls._session_factory() as session:
             try:
