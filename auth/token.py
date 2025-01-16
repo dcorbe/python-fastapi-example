@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
-from sqlalchemy.ext.asyncio import AsyncSession
 
 import jwt
 from fastapi import Depends, HTTPException, Security, status
@@ -8,6 +7,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from database import get_db
 from user import User
 from user.operations import get_user_by_email
 
@@ -38,7 +38,7 @@ def create_access_token(data: dict) -> str:
 
 async def get_current_user(
     credentials: Annotated[HTTPAuthorizationCredentials, Security(security)],
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ) -> User:
     config = get_jwt_config()
     try:
@@ -53,15 +53,7 @@ async def get_current_user(
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        # Exit early if no username
-        if username is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Could not validate credentials",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-
-        user = await get_user_by_email(session, username)
+        user = await get_user_by_email(db, username)
         if user is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -82,12 +74,3 @@ async def get_current_user(
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
-    user = await get_user_by_email(db, token_data.username if token_data.username is not None else "")
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    return user

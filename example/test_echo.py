@@ -58,4 +58,4 @@ async def test_echo_empty_body() -> None:
     response: JSONResponse = await echo(request, user)
 
     content = json.loads(bytes(response.body))
-    assert content['body'] is None
+    assert content["body"] is None

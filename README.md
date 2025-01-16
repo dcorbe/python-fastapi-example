@@ -1,7 +1,7 @@
-# Bridge Security Solutions Backend
+# FastAPI Demo
 This is primarily a
-[FastAPI](https://github.com/fastapi/fastapi) which is intended to be used as a teaching tool and reference for building 
-web APIs with Python.
+[FastAPI](https://github.com/fastapi/fastapi) application which is intended to be used as a teaching tool and reference 
+for building web APIs with Python.
 
 
 ## Table of Contents
@@ -10,7 +10,6 @@ web APIs with Python.
 - [Database Setup](#database-setup)
 - [Running the FastAPI Server](#running-the-fastapi-server)
 - [Type Checking](#type-checking)
-- [To Do List](#to-do)
 
 ## Core Dependencies
 
@@ -110,13 +109,3 @@ This will create your initial user with the specified email and password. You ca
    export TOKEN=$(http -f POST http://localhost:8000/auth/login username=email@address password=password | jq -r .access_token)
    echo ${TOKEN}
    ```
-
-## Type Checking
-
-The project uses mypy for static type checking. Type checking is enforced through:
-- Pre-commit hooks (runs on git commit)
-
-To run type checking manually:
-```bash
-poetry run mypy .
-```

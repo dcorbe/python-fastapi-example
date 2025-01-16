@@ -88,3 +88,9 @@ class Database:
             await cls._engine.dispose()
             cls._engine = None
             cls._session_factory = None
+
+
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    """FastAPI dependency that provides a database session."""
+    async with Database.session() as session:
+        yield session
