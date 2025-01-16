@@ -85,7 +85,14 @@ docker-compose up -d postgres
 docker-compose ps
 ```
 
-3. Initialize your first user:
+3. Run database migrations:
+```bash
+# Inside poetry shell
+alembic upgrade head
+```
+   This will create all necessary database tables and initialize the database schema.
+
+4. Initialize your first user:
 ```bash
 # Inside poetry shell
 python tools/adduser.py admin@example.com your_secure_password
