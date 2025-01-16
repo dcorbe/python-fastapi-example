@@ -9,6 +9,7 @@ for building web APIs with Python.
 - [Setting Up A Development Environment](#setting-up-a-development-environment)
 - [Database Setup](#database-setup)
 - [Running the FastAPI Server](#running-the-fastapi-server)
+- [OpenAPI Debug Console](#openapi-debug-console)
 - [Type Checking](#type-checking)
 
 ## Core Dependencies
@@ -116,3 +117,25 @@ This will create your initial user with the specified email and password. You ca
    export TOKEN=$(http -f POST http://localhost:8000/auth/login username=email@address password=password | jq -r .access_token)
    echo ${TOKEN}
    ```
+
+## OpenAPI Debug Console
+FastAPI automatically generates interactive API documentation using OpenAPI (formerly known as Swagger). The debug console provides a convenient way to explore and test the API endpoints.
+
+To access the OpenAPI debug console:
+
+1. Start the FastAPI server (if not already running)
+2. Open your web browser and navigate to:
+   - Swagger UI: http://localhost:8000/docs
+   - Alternative ReDoc UI: http://localhost:8000/redoc
+
+The debug console provides:
+- Interactive documentation for all API endpoints
+- Request/response schema information
+- Built-in API testing interface
+- Authentication support (use the "Authorize" button with your JWT token)
+
+To test authenticated endpoints:
+1. Click the "Authorize" button at the top of the page
+2. Enter your JWT token in the format: `Bearer your_token_here`
+3. Click "Authorize" to save
+4. You can now test protected endpoints directly from the console
