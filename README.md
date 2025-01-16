@@ -119,7 +119,7 @@ This will create your initial user with the specified email and password. You ca
 2. Verify the setup:
    ```bash
    # Test the login endpoint with your created user
-   export TOKEN=$(http -f POST http://localhost:8000/auth/login username=daniel@corbe.net password=cgpe845Z | jq -r .access_token)
+   export TOKEN=$(http -f POST http://localhost:8000/auth/login username=email@address password=password | jq -r .access_token)
    echo ${TOKEN}
    ```
 
@@ -132,19 +132,3 @@ To run type checking manually:
 ```bash
 poetry run mypy .
 ```
-
-## To Do:
-- ~~[Rebuild Rust Backend in Python (CAD-6)](https://bridgesecuritysolutions.atlassian.net/browse/CAD-6)~~
-- [Ingest API endpoint (CAD-15)](https://bridgesecuritysolutions.atlassian.net/browse/CAD-15)
-- [Motion Detection (CAD-16)](https://bridgesecuritysolutions.atlassian.net/browse/CAD-16)
-- [Video Playback API (CAD-17)](https://bridgesecuritysolutions.atlassian.net/browse/CAD-17)
-- [Implement Refresh Tokens (CAD-22)](https://bridgesecuritysolutions.atlassian.net/browse/CAD-22)
-- [User Management API (CAD-24)](https://bridgesecuritysolutions.atlassian.net/browse/CAD-24)
-- [Group Management API (CAD-25)](https://bridgesecuritysolutions.atlassian.net/browse/CAD-25)
-- [User management (CAD-24)](https://bridgesecuritysolutions.atlassian.net/browse/CAD-24)
-- [Group management (CAD-26)](https://bridgesecuritysolutions.atlassian.net/browse/CAD-26)
-- [Org management (CAD-27)](https://bridgesecuritysolutions.atlassian.net/browse/CAD-27)
-- [Admin API (CAD-28)](https://bridgesecuritysolutions.atlassian.net/browse/CAD-28)
-- [Camera API (CAD-32)](https://bridgesecuritysolutions.atlassian.net/browse/CAD-32)
-- [Camera Logging/Audit (CAD-33)](https://bridgesecuritysolutions.atlassian.net/browse/CAD-33)
-- [Dockerize Backend (CAD-37)](https://bridgesecuritysolutions.atlassian.net/browse/CAD-37)
