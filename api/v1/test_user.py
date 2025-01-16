@@ -6,7 +6,7 @@ from uuid import uuid4
 
 from user.schemas import UserResponse
 from user import User
-from .user import user as user_endpoint
+from .user import get_current_user_details
 
 pytestmark = pytest.mark.asyncio
 
@@ -27,7 +27,7 @@ def mock_user() -> MagicMock:
 
 async def test_user_endpoint_success(mock_user: MagicMock) -> None:
     """Test successful user info retrieval."""
-    result = await user_endpoint(mock_user)
+    result = await get_current_user_details(mock_user)
     
     assert result is not None
     assert result.id == mock_user.id
@@ -49,6 +49,6 @@ async def test_user_endpoint_field_changes(
 ) -> None:
     """Test that endpoint correctly reflects user field changes."""
     setattr(mock_user, field, value)
-    result = await user_endpoint(mock_user)
+    result = await get_current_user_details(mock_user)
     
     assert getattr(result, field) == value
