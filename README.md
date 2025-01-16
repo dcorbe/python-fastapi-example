@@ -1,4 +1,4 @@
-# FastAPI example application
+# Bridge Security Solutions Backend
 This is primarily a
 [FastAPI](https://github.com/fastapi/fastapi) which is intended to be used as a teaching tool and reference for building 
 web APIs with Python.
