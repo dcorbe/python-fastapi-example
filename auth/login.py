@@ -7,7 +7,7 @@ from passlib.context import CryptContext
 from passlib.exc import UnknownHashError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database_manager import get_db
+from database import get_db
 from user import User
 from user.operations import update_user
 from user.schemas import UserUpdate

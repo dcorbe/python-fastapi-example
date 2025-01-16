@@ -27,8 +27,10 @@ def get_url() -> str:
     url = os.getenv("DATABASE_URL")
     if url is None:
         raise ValueError("DATABASE_URL environment variable must be set")
-    if url.startswith("postgresql://"):
-        url = url.replace("postgresql://", "postgresql+asyncpg://")
+    # Ensure we're using postgresql+asyncpg:// scheme
+    if url.startswith(("postgresql://", "postgres://")):
+        url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        url = url.replace("postgres://", "postgresql+asyncpg://", 1)
     return url
 
 

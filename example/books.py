@@ -1,300 +1,272 @@
-"""Books API providing CRUD operations for managing a book collection.
+"""Example of database queries and async route handlers."""
 
-This module implements a RESTful API for managing books, including:
-- Creating new books
-- Retrieving individual books or listing all books
-- Updating existing books
-- Deleting books
+from datetime import UTC, datetime
+from typing import Annotated, List
+from uuid import UUID, uuid4
 
-All operations require authentication using JWT tokens.
-"""
-
-from datetime import datetime
-from typing import Annotated, List, Union
-from uuid import UUID
-
-from fastapi import APIRouter, Body, Depends, HTTPException, Path, status
-from pydantic import BaseModel, ConfigDict, Field
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, ConfigDict
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.token import get_current_user
-from database.models import Book
-from database_manager import get_db
+from database import get_db
+from database.models.example.books import Book as BookModel
 from user import User
 
 
+# Schema definitions
 class BookBase(BaseModel):
-    """Base schema with common optional fields for both create and update operations."""
+    """Base book schema."""
 
-    title: Union[str, None] = Field(
-        default=None, description="The title of the book", examples=["The Great Gatsby"]
-    )
-    author: Union[str, None] = Field(
-        default=None,
-        description="The author of the book",
-        examples=["F. Scott Fitzgerald"],
-    )
-    description: Union[str, None] = Field(
-        default=None,
-        description="A brief description or summary of the book",
-        examples=[
-            "A story of the fabulously wealthy Jay Gatsby and his love for the beautiful Daisy Buchanan."
-        ],
-    )
+    title: str
+    author: str
+    description: str | None = None
 
 
-class BookCreate(BaseModel):
-    """Schema for creating a new book with required fields."""
-
-    title: str = Field(
-        description="The title of the book",
-        min_length=1,
-        max_length=200,
-        examples=["The Great Gatsby"],
-    )
-    author: str = Field(
-        description="The author of the book",
-        min_length=1,
-        max_length=100,
-        examples=["F. Scott Fitzgerald"],
-    )
-    description: Union[str, None] = Field(
-        default=None,
-        description="A brief description or summary of the book",
-        max_length=1000,
-        examples=[
-            "A story of the fabulously wealthy Jay Gatsby and his love for the beautiful Daisy Buchanan."
-        ],
-    )
-
-
-class BookUpdate(BookBase):
-    """Schema for updating an existing book. All fields are optional to support partial updates."""
+class BookCreate(BookBase):
+    """Schema for creating a new book."""
 
     pass
 
 
-class BookResponse(BaseModel):
-    """Schema for book responses in all API operations."""
+class BookUpdate(BaseModel):
+    """Schema for updating a book."""
 
-    id: UUID = Field(description="Unique identifier for the book")
-    title: str = Field(description="The title of the book")
-    author: str = Field(description="The author of the book")
-    description: Union[str, None] = Field(
-        description="A brief description or summary of the book"
-    )
-    created_at: datetime = Field(description="Timestamp when the book was created")
-
-    model_config = ConfigDict(from_attributes=True)
+    title: str | None = None
+    author: str | None = None
+    description: str | None = None
 
 
-router = APIRouter(
-    prefix="/books",
-    tags=["books"],
-    responses={
-        403: {"detail": "Not authenticated"},
-    },
-)
+class Book(BookBase):
+    """Book response schema."""
+
+    id: UUID
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)  # Updated for Pydantic v2
+
+
+# Router and endpoints
+router = APIRouter(prefix="/books")
 
 
 @router.post(
     "",
-    response_model=BookResponse,
+    response_model=Book,
     status_code=status.HTTP_201_CREATED,
     summary="Create a new book",
-    description="Create a new book with the provided details. Requires authentication.",
-    responses={
-        201: {"description": "Book created successfully"},
-        400: {"description": "Invalid request (e.g., duplicate book or invalid data)"},
-    },
+    description="Create a new book in the database",
     operation_id="createBook",
+    responses={
+        201: {
+            "description": "Successfully created book",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "id": "123e4567-e89b-12d3-a456-426614174000",
+                        "title": "Sample Book",
+                        "author": "John Doe",
+                        "description": "A great book about things",
+                        "created_at": "2024-01-16T10:00:00Z",
+                    }
+                }
+            },
+        },
+        400: {"description": "Invalid book data"},
+    },
 )
 async def create_book(
     current_user: Annotated[User, Depends(get_current_user)],
-    book: BookCreate,
+    book_data: BookCreate,
     db: AsyncSession = Depends(get_db),
 ) -> Book:
-    """Create a new book in the database.
-
-    Args:
-        current_user: The authenticated user making the request
-        book: The book data to create
-        db: Database session
-
-    Returns:
-        The created book
-
-    Raises:
-        HTTPException: If book creation fails (e.g., due to duplicate title)
-    """
-    db_book = Book(**book.model_dump())
+    """Create a new book."""
     try:
-        db.add(db_book)
+        now = datetime.now(UTC)
+        book = BookModel(
+            id=uuid4(),
+            title=book_data.title,
+            author=book_data.author,
+            description=book_data.description,
+            created_at=now,
+        )
+        db.add(book)
         await db.commit()
-        await db.refresh(db_book)
-        return db_book
-    except IntegrityError:
+        await db.refresh(book)
+        return Book.model_validate(book)  # Convert to Pydantic model
+    except IntegrityError as e:
         await db.rollback()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Book creation failed - book may already exist",
-        )
-
-
-@router.get(
-    "/{book_id}",
-    response_model=BookResponse,
-    summary="Get a specific book",
-    description="Retrieve a book by its ID. Requires authentication.",
-    responses={
-        200: {"description": "Book found and returned"},
-        404: {"description": "Book not found"},
-    },
-    operation_id="getBook",
-)
-async def read_book(
-    current_user: Annotated[User, Depends(get_current_user)],
-    book_id: UUID = Path(..., description="The UUID of the book to retrieve"),
-    db: AsyncSession = Depends(get_db),
-) -> Book:
-    """Retrieve a specific book by ID.
-
-    Args:
-        current_user: The authenticated user making the request
-        book_id: The UUID of the book to retrieve
-        db: Database session
-
-    Returns:
-        The requested book
-
-    Raises:
-        HTTPException: If the book is not found
-    """
-    query = select(Book).where(Book.id == book_id)
-    result = await db.execute(query)
-    if book := result.scalar_one_or_none():
-        return book
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail=f"Book with ID {book_id} not found",
-    )
+            detail=str(e.orig),
+        ) from e
 
 
 @router.get(
     "",
-    response_model=List[BookResponse],
-    summary="List all books",
-    description="Retrieve a list of all books. Requires authentication.",
-    operation_id="listBooks",
+    response_model=List[Book],
+    summary="Get all books",
+    description="Get a list of all books in the database",
+    operation_id="getAllBooks",
+    responses={
+        200: {
+            "description": "Successfully retrieved all books",
+            "content": {
+                "application/json": {
+                    "example": [
+                        {
+                            "id": "123e4567-e89b-12d3-a456-426614174000",
+                            "title": "Sample Book",
+                            "author": "John Doe",
+                            "description": "A great book about things",
+                            "created_at": "2024-01-16T10:00:00Z",
+                        }
+                    ]
+                }
+            },
+        }
+    },
 )
 async def list_books(
     current_user: Annotated[User, Depends(get_current_user)],
     db: AsyncSession = Depends(get_db),
 ) -> List[Book]:
-    """Retrieve all books from the database.
-
-    Args:
-        current_user: The authenticated user making the request
-        db: Database session
-
-    Returns:
-        List of all books
-    """
-    query = select(Book)
-    result = await db.execute(query)
-    return list(result.scalars().all())
+    """Get all books."""
+    stmt = select(BookModel)
+    result = await db.execute(stmt)
+    books = list(result.scalars().all())
+    return [Book.model_validate(book) for book in books]  # Convert to Pydantic models
 
 
-@router.put(
+@router.get(
     "/{book_id}",
-    response_model=BookResponse,
-    summary="Update a book",
-    description="Update an existing book's details. Requires authentication. Only provided fields will be updated.",
+    response_model=Book,
+    summary="Get book by ID",
+    description="Get a specific book by its ID",
+    operation_id="getBookById",
     responses={
-        200: {"description": "Book updated successfully"},
-        400: {"description": "Invalid update data"},
+        200: {
+            "description": "Successfully retrieved the book",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "id": "123e4567-e89b-12d3-a456-426614174000",
+                        "title": "Sample Book",
+                        "author": "John Doe",
+                        "description": "A great book about things",
+                        "created_at": "2024-01-16T10:00:00Z",
+                    }
+                }
+            },
+        },
         404: {"description": "Book not found"},
     },
+)
+async def read_book(
+    current_user: Annotated[User, Depends(get_current_user)],
+    book_id: UUID,
+    db: AsyncSession = Depends(get_db),
+) -> Book:
+    """Get a book by its ID."""
+    stmt = select(BookModel).where(BookModel.id == book_id)
+    result = await db.execute(stmt)
+    book = result.scalar_one_or_none()
+
+    if not book:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Book not found",
+        )
+
+    return Book.model_validate(book)  # Convert to Pydantic model
+
+
+@router.patch(
+    "/{book_id}",
+    response_model=Book,
+    summary="Update book",
+    description="Update a book's details",
     operation_id="updateBook",
+    responses={
+        200: {
+            "description": "Successfully updated the book",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "id": "123e4567-e89b-12d3-a456-426614174000",
+                        "title": "Updated Book",
+                        "author": "John Doe",
+                        "description": "An updated book about things",
+                        "created_at": "2024-01-16T10:00:00Z",
+                    }
+                }
+            },
+        },
+        404: {"description": "Book not found"},
+        400: {"description": "Invalid update data"},
+    },
 )
 async def update_book(
     current_user: Annotated[User, Depends(get_current_user)],
-    book_id: UUID = Path(..., description="The UUID of the book to update"),
-    book_update: BookUpdate = Body(..., description="The book data to update"),
+    book_id: UUID,
+    update_data: BookUpdate,
     db: AsyncSession = Depends(get_db),
 ) -> Book:
-    """Update a specific book's details.
+    """Update a book's details."""
+    stmt = select(BookModel).where(BookModel.id == book_id)
+    result = await db.execute(stmt)
+    book = result.scalar_one_or_none()
 
-    Args:
-        current_user: The authenticated user making the request
-        book_id: The UUID of the book to update
-        book_update: The book data to update (partial updates supported)
-        db: Database session
+    if not book:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Book not found",
+        )
 
-    Returns:
-        The updated book
+    update_dict = update_data.model_dump(exclude_unset=True)
+    for key, value in update_dict.items():
+        setattr(book, key, value)
 
-    Raises:
-        HTTPException: If the book is not found or if the update fails
-    """
-    query = select(Book).where(Book.id == book_id)
-    result = await db.execute(query)
-    if db_book := result.scalar_one_or_none():
-        # Only update non-None values
-        update_data = book_update.model_dump(exclude_unset=True)
-        for key, value in update_data.items():
-            setattr(db_book, key, value)
-        try:
-            await db.commit()
-            await db.refresh(db_book)
-            return db_book
-        except IntegrityError:
-            await db.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Book update failed - invalid data or duplicate title",
-            )
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail=f"Book with ID {book_id} not found",
-    )
+    try:
+        await db.commit()
+        await db.refresh(book)
+        return Book.model_validate(book)  # Convert to Pydantic model
+    except IntegrityError as e:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e.orig),
+        ) from e
 
 
 @router.delete(
     "/{book_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    summary="Delete a book",
-    description="Delete a specific book. Requires authentication.",
+    summary="Delete book",
+    description="Delete a book from the database",
+    operation_id="deleteBook",
     responses={
-        204: {"description": "Book deleted successfully"},
+        204: {"description": "Successfully deleted the book"},
         404: {"description": "Book not found"},
     },
-    operation_id="deleteBook",
 )
 async def delete_book(
     current_user: Annotated[User, Depends(get_current_user)],
-    book_id: UUID = Path(..., description="The UUID of the book to delete"),
+    book_id: UUID,
     db: AsyncSession = Depends(get_db),
 ) -> None:
-    """Delete a specific book.
+    """Delete a book."""
+    stmt = select(BookModel).where(BookModel.id == book_id)
+    result = await db.execute(stmt)
+    book = result.scalar_one_or_none()
 
-    Args:
-        current_user: The authenticated user making the request
-        book_id: The UUID of the book to delete
-        db: Database session
-
-    Raises:
-        HTTPException: If the book is not found
-    """
-    query = select(Book).where(Book.id == book_id)
-    result = await db.execute(query)
-    if db_book := result.scalar_one_or_none():
-        await db.delete(db_book)
-        await db.commit()
-    else:
+    if not book:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Book with ID {book_id} not found",
+            detail="Book not found",
         )
+
+    await db.delete(book)
+    await db.commit()
