@@ -1,13 +1,12 @@
 """Unit tests for user endpoint functionality."""
 
 from datetime import UTC, datetime
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 from uuid import uuid4
 
 import pytest
 
 from user import User
-from user.schemas import UserResponse
 
 from .user import get_current_user_details
 

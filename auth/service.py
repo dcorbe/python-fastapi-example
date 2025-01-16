@@ -18,7 +18,7 @@ from .password import hash_password, verify_password
 class AuthService:
     """Service for handling authentication and token management."""
 
-    def __init__(self, config: AuthConfig):
+    def __init__(self, config: AuthConfig) -> None:
         self.config = config
         self._login_attempts: Dict[str, LoginAttempt] = {}
 

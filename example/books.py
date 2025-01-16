@@ -10,7 +10,7 @@ All operations require authentication using JWT tokens.
 """
 
 from datetime import datetime
-from typing import Annotated, List, Optional
+from typing import Annotated, List, Union
 from uuid import UUID
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Path, status
@@ -28,15 +28,15 @@ from user import User
 class BookBase(BaseModel):
     """Base schema with common optional fields for both create and update operations."""
 
-    title: Optional[str] = Field(
+    title: Union[str, None] = Field(
         default=None, description="The title of the book", examples=["The Great Gatsby"]
     )
-    author: Optional[str] = Field(
+    author: Union[str, None] = Field(
         default=None,
         description="The author of the book",
         examples=["F. Scott Fitzgerald"],
     )
-    description: Optional[str] = Field(
+    description: Union[str, None] = Field(
         default=None,
         description="A brief description or summary of the book",
         examples=[
@@ -60,7 +60,7 @@ class BookCreate(BaseModel):
         max_length=100,
         examples=["F. Scott Fitzgerald"],
     )
-    description: Optional[str] = Field(
+    description: Union[str, None] = Field(
         default=None,
         description="A brief description or summary of the book",
         max_length=1000,
@@ -82,7 +82,7 @@ class BookResponse(BaseModel):
     id: UUID = Field(description="Unique identifier for the book")
     title: str = Field(description="The title of the book")
     author: str = Field(description="The author of the book")
-    description: Optional[str] = Field(
+    description: Union[str, None] = Field(
         description="A brief description or summary of the book"
     )
     created_at: datetime = Field(description="Timestamp when the book was created")

@@ -2,20 +2,15 @@
 
 import uuid
 from datetime import datetime, timezone
-from typing import AsyncGenerator, Generator
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from fastapi import HTTPException
-from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from auth.token import get_current_user
 from database.models import Book
 from example.books import (
     BookCreate,
-    BookResponse,
     BookUpdate,
     create_book,
     delete_book,

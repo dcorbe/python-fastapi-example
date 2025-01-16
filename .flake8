@@ -1,0 +1,39 @@
+[flake8]
+max-line-length = 88
+extend-ignore = 
+    # Ignore line-length errors (let black handle this)
+    E501,
+    # Black-compatible ignore list (see black docs)
+    E203,W503,
+    # Allow missing function argument annotations (handled by mypy)
+    ANN101,
+    # Allow missing self annotation (handled by mypy)
+    ANN102,
+    # Allow missing *args and **kwargs annotations (handled by mypy)
+    ANN002,ANN003,
+    # Allow Union[X, None] syntax as it's more modern than Optional[X]
+    SIM907,
+    # Allow function calls in argument defaults.  This is a common pattern in FastAPI applications
+    B008
+max-complexity = 10
+exclude = 
+    .git,
+    __pycache__,
+    build,
+    dist,
+    .mypy_cache,
+    .pytest_cache,
+    .venv
+per-file-ignores = 
+    # Allow missing return annotations in tests
+    test_*.py: ANN201
+    # Allow assert statements in tests
+    test_*.py: S101
+    # Ignore all flake8-simplify warnings and trailing whitespace in Alembic migrations
+    database/migrations/versions/*.py: SIM,W291
+    alembic/versions/*.py: SIM,W291
+    # Allow unused imports in Alembic env.py (for model registration)
+    database/migrations/env.py: F401
+    alembic/env.py: F401
+    # Allow nested if statements in user operations where they improve readability
+    user/operations.py: SIM102

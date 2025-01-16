@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator, Optional, Tuple
+from typing import AsyncGenerator, Optional
 from urllib.parse import urlparse
 
 from sqlalchemy.ext.asyncio import (

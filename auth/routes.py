@@ -7,9 +7,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database_manager import get_db
-from user import User
 
-from .dependencies import get_current_user
 from .models import Token
 from .service import AuthService
 
@@ -17,7 +15,7 @@ from .service import AuthService
 class AuthRouter:
     """Router for authentication endpoints."""
 
-    def __init__(self, auth_service: AuthService):
+    def __init__(self, auth_service: AuthService) -> None:
         self.auth_service = auth_service
         self.router = APIRouter(
             prefix="/auth",

@@ -3,7 +3,6 @@
 import asyncio
 import os
 from logging.config import fileConfig
-from typing import Optional
 
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
