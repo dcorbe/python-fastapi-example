@@ -1,5 +1,4 @@
 """User management unit tests."""
-import os
 from datetime import datetime, UTC, timedelta
 from typing import AsyncGenerator
 from uuid import UUID
@@ -12,6 +11,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import Database
+from config import get_settings
 from .model import User
 from .operations import (
     get_user_by_email,
@@ -21,69 +21,15 @@ from .operations import (
     update_user,
     delete_user
 )
-from .schemas import UserCreate, UserUpdate, UserResponse
-
-
-async def _clear_database(session: AsyncSession) -> None:
-    """Reset the database to a clean state."""
-    # Drop and recreate the users table
-    await session.execute(text("DROP TABLE IF EXISTS users CASCADE"))
-    await session.execute(text("""
-        CREATE TABLE users (
-            id UUID PRIMARY KEY,
-            email VARCHAR(255) NOT NULL,
-            password_hash VARCHAR(255) NOT NULL,
-            email_verified BOOLEAN NOT NULL DEFAULT FALSE,
-            created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-            last_login TIMESTAMP WITH TIME ZONE,
-            failed_login_attempts INTEGER NOT NULL DEFAULT 0,
-            locked_until TIMESTAMP WITH TIME ZONE
-        )
-    """))
-    # Recreate the email index
-    await session.execute(text(
-        "CREATE UNIQUE INDEX ix_users_email_lower ON users (LOWER(email))"
-    ))
-    await session.commit()
+from .schemas import UserCreate, UserUpdate
 
 
 @pytest_asyncio.fixture(autouse=True)
-async def setup_test_database() -> AsyncGenerator[None, None]:
-    """Setup test database environment."""
-    if "TEST_DATABASE_URL" not in os.environ:
-        raise ValueError("TEST_DATABASE_URL environment variable must be set")
-    
-    # Store original DATABASE_URL if it exists
-    original_db_url = os.environ.get("DATABASE_URL")
-    
-    try:
-        # Use test database URL
-        os.environ["DATABASE_URL"] = os.environ["TEST_DATABASE_URL"]
-        Database.init()
-        
-        # Clear test data before each test
-        async with Database.session() as session:
-            await _clear_database(session)
-        
-        yield
-        
-    finally:
-        # Clear all test data after each test
-        async with Database.session() as session:
-            await _clear_database(session)
-            
-        # Close all connections
-        await Database.close()
-        
-        # Restore original DATABASE_URL if it existed
-        if original_db_url is not None:
-            os.environ["DATABASE_URL"] = original_db_url
-        else:
-            del os.environ["DATABASE_URL"]
-        
-        # Reset Database class state
-        Database._engine = None
-        Database._session_factory = None
+async def setup_database() -> AsyncGenerator[None, None]:
+    """Setup test database."""
+    Database.init()
+    yield
+    await Database.close()
 
 
 @pytest_asyncio.fixture
@@ -94,22 +40,29 @@ async def session() -> AsyncGenerator[AsyncSession, None]:
 
 
 @pytest_asyncio.fixture
-async def test_user(session: AsyncSession) -> AsyncGenerator[User, None]:
+async def test_user(session: AsyncSession) -> User:
     """Create a test user."""
     user_data = UserCreate(
         email="test@example.com",
         password_hash="hashed_password_123",
         email_verified=False
     )
+
+    # Clear any existing test user
+    await session.execute(
+        text("DELETE FROM users WHERE email = :email"),
+        {"email": user_data.email}
+    )
+    
     user = await create_user(session, user_data)
-    yield user
+    return user
 
 
 @pytest.mark.asyncio
 async def test_create_user(session: AsyncSession) -> None:
     """Test user creation."""
     user_data = UserCreate(
-        email="test@example.com",
+        email="create_test@example.com",
         password_hash="hashed_password_123",
     )
     
@@ -175,10 +128,14 @@ async def test_delete_user(session: AsyncSession, test_user: User) -> None:
 @pytest.mark.asyncio
 async def test_get_all_users(session: AsyncSession) -> None:
     """Test retrieving multiple users."""
+    # First, ensure we have a clean slate
+    await session.execute(text("DELETE FROM users"))
+    await session.commit()
+
     # Create multiple users with unique emails
     users_data = [
         UserCreate(
-            email=f"test{i}@unique.example.com",  # More unique email pattern
+            email=f"test{i}@unique.example.com",
             password_hash=f"hash{i}"
         )
         for i in range(3)
@@ -189,7 +146,6 @@ async def test_get_all_users(session: AsyncSession) -> None:
     for user_data in users_data:
         user = await create_user(session, user_data)
         created_users.append(user)
-        await session.commit()  # Commit after each creation
 
     # Test retrieving all users
     all_users = await get_all_users(session)
@@ -204,9 +160,14 @@ async def test_get_all_users(session: AsyncSession) -> None:
 @pytest.mark.asyncio
 async def test_user_constraints(session: AsyncSession) -> None:
     """Test database constraints and validation."""
+    email = "constraint_test@example.com"
+    # Clean up any existing test data
+    await session.execute(text("DELETE FROM users WHERE email = :email"), {"email": email})
+    await session.commit()
+
     # Test duplicate email
     user_data = UserCreate(
-        email="test@example.com",
+        email=email,
         password_hash="hash1"
     )
     await create_user(session, user_data)

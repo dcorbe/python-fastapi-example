@@ -58,6 +58,7 @@ class UserUpdate(BaseModel):
     email_verified: Optional[bool] = Field(None, description="Update email verification status")
     failed_login_attempts: Optional[int] = Field(None, description="Update failed login attempts")
     locked_until: Optional[datetime] = Field(None, description="Update account lock expiry")
+    last_login: Optional[datetime] = Field(None, description="Last successful login time")
 
     model_config = ConfigDict(
         from_attributes=True,
