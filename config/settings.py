@@ -37,6 +37,9 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=30, gt=0)
 
+    # Database Logging
+    SQL_LOGGING: bool = Field(default=False, description="Enable SQL query logging")
+
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
 
     def get_from_email(self) -> str:

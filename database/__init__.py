@@ -12,6 +12,8 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from config.settings import get_settings
+
 from .config import get_database_url
 
 
@@ -27,9 +29,10 @@ class Database:
         sql_url = get_database_url()
         print(f"Using SQLAlchemy URL: {sql_url}")  # Will be masked by logs
 
+        settings = get_settings()
         cls._engine = create_async_engine(
             sql_url,
-            echo=False,  # Enable SQL logging
+            echo=settings.SQL_LOGGING,
             pool_pre_ping=True,
             pool_size=5,
             max_overflow=10,
