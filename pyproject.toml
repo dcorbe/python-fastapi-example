@@ -8,9 +8,9 @@ packages = [
     { include = "auth" },
     { include = "example" },
     { include = "monitoring" },
-    { include = "api"},
-    { include = "user" },
-    { include = "database" }
+    { include = "database" },
+    { include = "main" },
+    { include = "v1" }
 ]
 
 [tool.poetry.dependencies]
@@ -26,7 +26,9 @@ aiosmtplib = "^3.0.1"
 sqlalchemy = "^2.0.37"
 asyncpg = "^0.30.0"
 alembic = "^1.14.0"
+greenlet = "^3.0.3"
 bcrypt = "^4.2.1"
+redis = {extras = ["hiredis"], version = "^5.0.1"}
 
 [tool.poetry.group.dev.dependencies]
 pyaml = "^25.1.0"
@@ -100,3 +102,6 @@ asyncio_mode = "strict"
 asyncio_default_fixture_loop_scope = "function"
 testpaths = ["example", "auth", "monitoring", "user"]
 python_files = ["test_*.py"]
+filterwarnings = [
+    "ignore::DeprecationWarning:certifi.core"
+]

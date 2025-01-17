@@ -1,43 +1,76 @@
-"""Add a user to the database."""
+"""Add a new user to the database."""
 
 import asyncio
+import sys
+from datetime import UTC, datetime
+from typing import NoReturn
 
-from auth.service import AuthConfig, AuthService
-from database import Database
+from sqlalchemy import select
+
+from auth.config import RedisConfig
+from auth.models import AuthConfig
+from auth.redis import RedisService
+from auth.service import AuthService
+from config import get_settings
+from database.session import async_session_factory
 from v1.users.models import User
 
 
-async def create_user(email: str, password: str) -> None:
+async def main(email: str, password: str) -> None:
+    """Add a new user to the database."""
+    settings = get_settings()
+
     # Initialize auth service
     auth_config = AuthConfig(
-        jwt_secret_key="bloobityblabbitybloo!",  # This isn't used for user creation but has to be set to something
-        jwt_algorithm="HS256",
-        access_token_expire_minutes=30,
-        max_login_attempts=5,
-        lockout_minutes=15,
+        jwt_secret_key=settings.JWT_SECRET,
+        jwt_algorithm=settings.JWT_ALGORITHM,
+        access_token_expire_minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES,
+        max_login_attempts=settings.MAX_LOGIN_ATTEMPTS,
+        lockout_minutes=settings.LOCKOUT_MINUTES,
     )
-    auth_service = AuthService(auth_config)
 
-    # Hash the password
-    password_hash = auth_service.hash_password(password)
+    redis_config = RedisConfig(
+        host=settings.REDIS_HOST,
+        port=settings.REDIS_PORT,
+        db=settings.REDIS_DB,
+        password=settings.REDIS_PASSWORD,
+    )
 
-    # Create user
-    user = User(email=email, password_hash=password_hash, email_verified=False)
+    redis_service = RedisService(redis_config)
+    auth_service = AuthService(auth_config, redis_service)
 
-    async with Database.session() as session:
+    # Setup database
+    async with async_session_factory() as session:
+        # Check if user exists
+        stmt = select(User).where(User.email.ilike(email))
+        result = await session.execute(stmt)
+        if result.scalar_one_or_none() is not None:
+            print(f"User {email} already exists")
+            return
+
+        # Create user
+        user = User(
+            email=email,
+            password_hash=auth_service.hash_password(password),
+            created_at=datetime.now(UTC),
+            last_login=None,
+        )
         session.add(user)
         await session.commit()
-        print(f"Created user: {user.email}")
+
+        print(f"User {email} created successfully")
+
+    await redis_service.close()
+
+
+def show_usage() -> NoReturn:
+    """Show usage information."""
+    print("Usage: adduser.py <email> <password>")
+    sys.exit(1)
 
 
 if __name__ == "__main__":
-    import sys
-
     if len(sys.argv) != 3:
-        print(f"Usage: python {sys.argv[0]} <email> <password>")
-        sys.exit(1)
+        show_usage()
 
-    email = sys.argv[1]
-    password = sys.argv[2]
-
-    asyncio.run(create_user(email, password))
+    asyncio.run(main(sys.argv[1], sys.argv[2]))

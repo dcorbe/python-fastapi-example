@@ -9,17 +9,17 @@ from jwt.exceptions import ExpiredSignatureError, PyJWTError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from v1.users.models import User
-
 from .models import AuthConfig, LoginAttempt, TokenData
 from .password import hash_password, verify_password
+from .redis import RedisService
 
 
 class AuthService:
     """Service for handling authentication and token management."""
 
-    def __init__(self, config: AuthConfig) -> None:
+    def __init__(self, config: AuthConfig, redis_service: RedisService) -> None:
         self.config = config
+        self.redis_service = redis_service
         self._login_attempts: Dict[str, LoginAttempt] = {}
 
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
@@ -49,15 +49,58 @@ class AuthService:
             to_encode, self.config.jwt_secret_key, algorithm=self.config.jwt_algorithm
         )
 
-    def decode_token(self, token: str) -> TokenData:
+    def _clean_token(self, token: str) -> str:
+        """Remove Bearer prefix and any whitespace."""
+        print("\n=== Cleaning Token ===")
+        print("1. Original token:", token)
+
+        # Remove 'Bearer ' prefix if present
+        if token.startswith("Bearer "):
+            token = token[7:]
+            print("2. Removed Bearer prefix")
+
+        # Remove any whitespace
+        token = token.strip()
+        print("3. Final cleaned token:", token)
+        print("=== Token Cleaning Complete ===\n")
+        return token
+
+    async def _check_blacklist(self, token: str) -> None:
+        """Check if a token is blacklisted."""
+        try:
+            if await self.redis_service.is_blacklisted(token):
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Token has been invalidated",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+        except HTTPException as e:
+            if e.status_code == status.HTTP_401_UNAUTHORIZED:
+                raise
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token has been invalidated",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+    async def decode_token(self, token: str, check_blacklist: bool = True) -> TokenData:
         """Decode and validate a JWT token."""
         try:
+            cleaned_token = self._clean_token(token)
+
+            # First try to decode the token to catch any JWT-related errors
             payload = jwt.decode(
-                token,
+                cleaned_token,
                 self.config.jwt_secret_key,
                 algorithms=[self.config.jwt_algorithm],
             )
+
+            # Then check blacklist if required
+            if check_blacklist:
+                await self._check_blacklist(cleaned_token)
+
             return TokenData(**payload)
+
         except ExpiredSignatureError:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -70,11 +113,70 @@ class AuthService:
                 detail="Could not validate credentials",
                 headers={"WWW-Authenticate": "Bearer"},
             )
+        except HTTPException:
+            raise
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+    def _get_token_ttl(self, token: str) -> timedelta | None:
+        """Get the time-to-live for a token."""
+        try:
+            payload = jwt.decode(
+                token,
+                self.config.jwt_secret_key,
+                algorithms=[self.config.jwt_algorithm],
+            )
+            exp = datetime.fromtimestamp(payload["exp"], UTC)
+            ttl = exp - datetime.now(UTC)
+            if ttl.total_seconds() <= 0:
+                return None  # Expired token
+            return ttl
+        except ExpiredSignatureError:
+            return None  # Expired token
+        except PyJWTError:
+            raise HTTPException(  # Invalid token format
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token format",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+    async def blacklist_token(self, token: str) -> None:
+        """Add a token to the blacklist."""
+        try:
+            cleaned_token = self._clean_token(token)
+
+            # Get token TTL (will raise HTTPException for invalid tokens)
+            ttl = self._get_token_ttl(cleaned_token)
+            if not ttl:
+                return  # Token is expired
+
+            # Check if already blacklisted
+            if await self.redis_service.is_blacklisted(cleaned_token):
+                return
+
+            # Add to blacklist
+            await self.redis_service.add_to_blacklist(cleaned_token, ttl)
+
+        except HTTPException:
+            raise
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token format",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
 
     async def authenticate_user(
         self, email: str, password: str, session: AsyncSession
-    ) -> User:
+    ) -> Any:
         """Authenticate a user."""
+        # Import here to avoid circular import
+        from v1.users.models import User
+
         # Check for account lockout
         if self._is_account_locked(email):
             raise HTTPException(

@@ -2,7 +2,7 @@
 
 from datetime import UTC, datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class AuthConfig(BaseModel):
@@ -23,10 +23,12 @@ class Token(BaseModel):
 
 
 class TokenData(BaseModel):
-    """JWT token payload"""
+    """Token data model."""
 
     sub: str | None = None
     exp: datetime | None = None
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class LoginAttempt(BaseModel):
@@ -36,3 +38,10 @@ class LoginAttempt(BaseModel):
     attempts: int = 0
     locked_until: datetime | None = None
     last_attempt: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+
+class BlacklistedToken(BaseModel):
+    """Represents a blacklisted token"""
+
+    token: str
+    blacklisted_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

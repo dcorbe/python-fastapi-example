@@ -1,31 +1,6 @@
 from typing import Dict
 
-from database import Database
-from example import router as example_router
-from v1 import router as api_v1_router
-
-from .app import Application
-
-# Create an instance of the custom Application class
-app = Application()
-
-
-# TODO: Investigate on_event deprecation warnings emitted here
-@app.on_event("startup")
-async def startup() -> None:
-    """Initialize database on startup."""
-    Database.init()
-
-
-@app.on_event("shutdown")
-async def shutdown() -> None:
-    """Close database on shutdown."""
-    await Database.close()
-
-
-app.init()
-app.include_router(example_router)
-app.include_router(api_v1_router)
+from .app import app
 
 
 @app.get("/")

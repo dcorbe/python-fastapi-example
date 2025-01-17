@@ -2,12 +2,14 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database import get_db
+from v1.users.models import User
 
+from .dependencies import get_current_user, oauth2_scheme
 from .models import Token
 from .service import AuthService
 
@@ -58,3 +60,40 @@ class AuthRouter:
             access_token = self.auth_service.create_access_token({"sub": user.email})
 
             return Token(access_token=access_token, token_type="bearer")
+
+        @self.router.post(
+            "/logout",
+            status_code=status.HTTP_200_OK,
+            summary="Logout user",
+            description="Invalidate the current access token",
+            operation_id="logoutUser",
+            responses={
+                200: {"description": "Successfully logged out"},
+                401: {"description": "Invalid or expired token"},
+            },
+        )
+        async def logout_user(
+            token: Annotated[str, Depends(oauth2_scheme)],  # Get raw token first
+            current_user: Annotated[User, Depends(get_current_user)],  # Then get user
+        ) -> dict[str, str]:
+            """Logout endpoint."""
+            try:
+                print("\n=== Logout Process Start ===")
+                print(f"1. Processing logout for user: {current_user.email}")
+
+                # Blacklist the raw token
+                await self.auth_service.blacklist_token(token)
+                print("2. Token blacklisted successfully")
+                print("=== Logout Process Complete ===\n")
+
+                return {"message": "Successfully logged out"}
+            except HTTPException as e:
+                # Re-raise HTTPException with original status code and details
+                raise e
+            except Exception as e:
+                print(f"Error during logout: {str(e)}")
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Could not validate credentials",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )

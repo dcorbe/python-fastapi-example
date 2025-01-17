@@ -1,21 +1,31 @@
-from typing import Any
+from contextlib import asynccontextmanager
+from typing import Any, AsyncGenerator, Union
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from auth import AuthConfig, AuthService, setup_auth
-from auth.config import JWTConfig, get_jwt_config, initialize_jwt_config
+from auth import AuthConfig, AuthService, create_auth_router, setup_auth
+from auth.config import (
+    JWTConfig,
+    get_jwt_config,
+    initialize_jwt_config,
+    initialize_redis_config,
+)
 from config import Settings, get_settings
+from example import router as example_router
 from monitoring import CrashReporter, EmailConfig, setup_crash_reporting
+from v1.users.router import router as users_router
 
 
 class Application(FastAPI):
-    settings: Settings | None = None
-    jwt_config: JWTConfig | None = None
-    email_config: EmailConfig | None = None
-    crash_reporter: CrashReporter | None = None
-    auth_config: AuthConfig | None = None
-    auth_service: AuthService | None = None
+    """FastAPI application with additional functionality."""
+
+    settings: Union[Settings, None] = None
+    jwt_config: Union[JWTConfig, None] = None
+    email_config: Union[EmailConfig, None] = None
+    crash_reporter: Union[CrashReporter, None] = None
+    auth_config: Union[AuthConfig, None] = None
+    auth_service: Union[AuthService, None] = None
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         # Initialize FastAPI with just the essential OpenAPI settings
@@ -28,14 +38,41 @@ class Application(FastAPI):
         )
         self._initialized = False
 
-    def init(self) -> None:
+        # Configure CORS middleware during initialization
+        # TODO: Do not allow all origins in production
+        self.add_middleware(
+            CORSMiddleware,
+            allow_origins=["*"],
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+
+        @self.on_event("shutdown")
+        async def shutdown_event() -> None:
+            """Close Redis connection on shutdown."""
+            from auth.dependencies import get_redis_service
+
+            try:
+                redis_service = get_redis_service()
+                await redis_service.close()
+                print("Redis connection closed on shutdown")
+            except Exception as e:
+                print(f"Error closing Redis connection: {str(e)}")
+
+    async def initialize(self) -> None:
+        """Initialize application components."""
         if self._initialized:
             return
         self._initialized = True
 
+        print("Initializing application...")
         self.settings = get_settings()
-        self._cors_configuration()
+
+        # Initialize JWT and Redis configs
+        print("Initializing JWT and Redis configs...")
         initialize_jwt_config()
+        initialize_redis_config()
         self.jwt_config = get_jwt_config()
 
         self.email_config = EmailConfig(
@@ -50,6 +87,7 @@ class Application(FastAPI):
         )
         self.crash_reporter = setup_crash_reporting(self, self.email_config)
 
+        print("Setting up authentication...")
         self.auth_config = AuthConfig(
             jwt_secret_key=self.settings.JWT_SECRET,
             jwt_algorithm=self.settings.JWT_ALGORITHM,
@@ -57,14 +95,27 @@ class Application(FastAPI):
             max_login_attempts=self.settings.MAX_LOGIN_ATTEMPTS,
             lockout_minutes=self.settings.LOCKOUT_MINUTES,
         )
-        self.auth_service = setup_auth(self, self.auth_config)
 
-    # TODO: Do not allow all origins in production
-    def _cors_configuration(self) -> None:
-        self.add_middleware(
-            CORSMiddleware,
-            allow_origins=["*"],
-            allow_credentials=True,
-            allow_methods=["*"],
-            allow_headers=["*"],
-        )
+        # Initialize auth service
+        self.auth_service = await setup_auth(self, self.auth_config)
+
+        # Include routers
+        auth_router = create_auth_router(self.auth_service)
+        self.include_router(auth_router.router)
+        self.include_router(users_router, prefix="/v1")
+        self.include_router(example_router)
+
+        # Redis connection is already tested in setup_auth()
+        print("Application initialization complete")
+
+
+@asynccontextmanager
+async def lifespan(app: Application) -> AsyncGenerator[None, None]:
+    """Handle application lifecycle events."""
+    await app.initialize()
+    yield
+    # Cleanup handled in shutdown_event
+
+
+# Create application instance with lifespan context manager
+app = Application(lifespan=lifespan)

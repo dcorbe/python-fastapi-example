@@ -11,7 +11,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
 
-from auth.token import get_current_user
+from auth import get_current_active_user
 from database import get_db
 from database.models.base import Base
 from v1.users.models import User
@@ -93,7 +93,7 @@ router = APIRouter(prefix="/books")
     },
 )
 async def create_book(
-    current_user: Annotated[User, Depends(get_current_user)],
+    user: Annotated[User, Depends(get_current_active_user)],
     book_data: BookCreate,
     db: AsyncSession = Depends(get_db),
 ) -> BookSchema:
@@ -145,7 +145,7 @@ async def create_book(
     },
 )
 async def list_books(
-    current_user: Annotated[User, Depends(get_current_user)],
+    user: Annotated[User, Depends(get_current_active_user)],
     db: AsyncSession = Depends(get_db),
 ) -> List[BookSchema]:
     """Get all books."""
@@ -182,7 +182,7 @@ async def list_books(
     },
 )
 async def read_book(
-    current_user: Annotated[User, Depends(get_current_user)],
+    user: Annotated[User, Depends(get_current_active_user)],
     book_id: UUID,
     db: AsyncSession = Depends(get_db),
 ) -> BookSchema:
@@ -226,7 +226,7 @@ async def read_book(
     },
 )
 async def update_book(
-    current_user: Annotated[User, Depends(get_current_user)],
+    user: Annotated[User, Depends(get_current_active_user)],
     book_id: UUID,
     update_data: BookUpdate,
     db: AsyncSession = Depends(get_db),
@@ -270,7 +270,7 @@ async def update_book(
     },
 )
 async def delete_book(
-    current_user: Annotated[User, Depends(get_current_user)],
+    user: Annotated[User, Depends(get_current_active_user)],
     book_id: UUID,
     db: AsyncSession = Depends(get_db),
 ) -> None:

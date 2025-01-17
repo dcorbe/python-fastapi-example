@@ -12,6 +12,12 @@ class Settings(BaseSettings):
     POSTGRES_DB: str
     DATABASE_URL: str
 
+    # Redis Configuration
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = 6379
+    REDIS_DB: int = 1  # Use a separate database for token blacklisting
+    REDIS_PASSWORD: str | None = None
+
     # SMTP Configuration
     SMTP_HOST: str = "smtp.gmail.com"
     SMTP_PORT: int = 465

@@ -30,8 +30,8 @@ def mock_user() -> MagicMock:
 @pytest.fixture
 def app() -> Application:
     """Create test FastAPI application."""
-    app = Application()
-    app.init()
+    from main.app import app
+
     return app
 
 

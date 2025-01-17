@@ -49,8 +49,9 @@ class EchoResponse(BaseModel):
 router = APIRouter(tags=["example"], responses={403: {"detail": "Not authenticated"}})
 
 
-@router.post(
+@router.api_route(
     "/echo",
+    methods=["GET", "POST"],
     response_model=EchoResponse,
     summary="Echo Request Details",
     description="Echo back the complete details of the HTTP request, including headers, method, URL, and body. Requires authentication.",
