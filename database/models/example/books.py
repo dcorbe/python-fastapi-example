@@ -1,7 +1,8 @@
-"""Book model for example purposes."""
+"""Book model for example API."""
 
 from datetime import datetime
 from typing import Optional
+from uuid import UUID
 
 from sqlalchemy import DateTime, String
 from sqlalchemy.orm import Mapped, mapped_column
@@ -14,10 +15,10 @@ class Book(Base):
 
     __tablename__ = "books"
 
-    title: Mapped[str] = mapped_column(String(100))
-    author: Mapped[str] = mapped_column(String(100))
-    description: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    author: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(String(1000), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        server_default="CURRENT_TIMESTAMP",
+        DateTime(timezone=True), nullable=False
     )

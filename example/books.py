@@ -6,14 +6,29 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy import select
+from sqlalchemy import DateTime, String, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Mapped, mapped_column
 
 from auth.token import get_current_user
 from database import get_db
-from database.models.example.books import Book as BookModel
+from database.models.base import Base
 from v1.users.models import User
+
+
+class Book(Base):
+    """Book database model."""
+
+    __tablename__ = "books"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    author: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
 
 
 # Schema definitions
@@ -39,7 +54,7 @@ class BookUpdate(BaseModel):
     description: str | None = None
 
 
-class Book(BookBase):
+class BookSchema(BookBase):
     """Book response schema."""
 
     id: UUID
@@ -54,7 +69,7 @@ router = APIRouter(prefix="/books")
 
 @router.post(
     "",
-    response_model=Book,
+    response_model=BookSchema,
     status_code=status.HTTP_201_CREATED,
     summary="Create a new book",
     description="Create a new book in the database",
@@ -81,11 +96,11 @@ async def create_book(
     current_user: Annotated[User, Depends(get_current_user)],
     book_data: BookCreate,
     db: AsyncSession = Depends(get_db),
-) -> Book:
+) -> BookSchema:
     """Create a new book."""
     try:
         now = datetime.now(UTC)
-        book = BookModel(
+        book = Book(
             id=uuid4(),
             title=book_data.title,
             author=book_data.author,
@@ -95,7 +110,7 @@ async def create_book(
         db.add(book)
         await db.commit()
         await db.refresh(book)
-        return Book.model_validate(book)  # Convert to Pydantic model
+        return BookSchema.model_validate(book)  # Convert to Pydantic model
     except IntegrityError as e:
         await db.rollback()
         raise HTTPException(
@@ -106,7 +121,7 @@ async def create_book(
 
 @router.get(
     "",
-    response_model=List[Book],
+    response_model=List[BookSchema],
     summary="Get all books",
     description="Get a list of all books in the database",
     operation_id="getAllBooks",
@@ -132,17 +147,19 @@ async def create_book(
 async def list_books(
     current_user: Annotated[User, Depends(get_current_user)],
     db: AsyncSession = Depends(get_db),
-) -> List[Book]:
+) -> List[BookSchema]:
     """Get all books."""
-    stmt = select(BookModel)
+    stmt = select(Book)
     result = await db.execute(stmt)
     books = list(result.scalars().all())
-    return [Book.model_validate(book) for book in books]  # Convert to Pydantic models
+    return [
+        BookSchema.model_validate(book) for book in books
+    ]  # Convert to Pydantic models
 
 
 @router.get(
     "/{book_id}",
-    response_model=Book,
+    response_model=BookSchema,
     summary="Get book by ID",
     description="Get a specific book by its ID",
     operation_id="getBookById",
@@ -168,9 +185,9 @@ async def read_book(
     current_user: Annotated[User, Depends(get_current_user)],
     book_id: UUID,
     db: AsyncSession = Depends(get_db),
-) -> Book:
+) -> BookSchema:
     """Get a book by its ID."""
-    stmt = select(BookModel).where(BookModel.id == book_id)
+    stmt = select(Book).where(Book.id == book_id)
     result = await db.execute(stmt)
     book = result.scalar_one_or_none()
 
@@ -180,12 +197,12 @@ async def read_book(
             detail="Book not found",
         )
 
-    return Book.model_validate(book)  # Convert to Pydantic model
+    return BookSchema.model_validate(book)  # Convert to Pydantic model
 
 
 @router.patch(
     "/{book_id}",
-    response_model=Book,
+    response_model=BookSchema,
     summary="Update book",
     description="Update a book's details",
     operation_id="updateBook",
@@ -213,9 +230,9 @@ async def update_book(
     book_id: UUID,
     update_data: BookUpdate,
     db: AsyncSession = Depends(get_db),
-) -> Book:
+) -> BookSchema:
     """Update a book's details."""
-    stmt = select(BookModel).where(BookModel.id == book_id)
+    stmt = select(Book).where(Book.id == book_id)
     result = await db.execute(stmt)
     book = result.scalar_one_or_none()
 
@@ -232,7 +249,7 @@ async def update_book(
     try:
         await db.commit()
         await db.refresh(book)
-        return Book.model_validate(book)  # Convert to Pydantic model
+        return BookSchema.model_validate(book)  # Convert to Pydantic model
     except IntegrityError as e:
         await db.rollback()
         raise HTTPException(
@@ -258,7 +275,7 @@ async def delete_book(
     db: AsyncSession = Depends(get_db),
 ) -> None:
     """Delete a book."""
-    stmt = select(BookModel).where(BookModel.id == book_id)
+    stmt = select(Book).where(Book.id == book_id)
     result = await db.execute(stmt)
     book = result.scalar_one_or_none()
 
