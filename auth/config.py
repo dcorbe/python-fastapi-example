@@ -4,6 +4,8 @@ import os
 
 from pydantic import BaseModel, Field
 
+from config.logging import jwt_log, redis_log
+
 
 class JWTConfig(BaseModel):
     """Centralized JWT configuration"""
@@ -47,7 +49,7 @@ class RedisConfig(BaseModel):
             db=settings.REDIS_DB,
             password=settings.REDIS_PASSWORD,
         )
-        print(
+        redis_log(
             f"Redis config initialized: host={config.host}, port={config.port}, db={config.db}"
         )
         return config
@@ -87,6 +89,9 @@ def get_redis_config() -> RedisConfig:
 def initialize_jwt_config() -> None:
     global jwt_config
     jwt_config = JWTConfig.from_env()
+    jwt_log(
+        f"JWT config initialized: algorithm={jwt_config.algorithm}, expire_minutes={jwt_config.access_token_expire_minutes}"
+    )
 
 
 def initialize_redis_config() -> None:

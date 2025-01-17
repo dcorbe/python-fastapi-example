@@ -37,8 +37,13 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=30, gt=0)
 
-    # Database Logging
+    # Logging Configuration
     SQL_LOGGING: bool = Field(default=False, description="Enable SQL query logging")
+    DEBUG_CRASH_REPORTER: bool = Field(
+        default=False, description="Enable debug logging for crash reporter"
+    )
+    DEBUG_REDIS: bool = Field(default=False, description="Enable Redis debug logging")
+    DEBUG_JWT: bool = Field(default=False, description="Enable JWT debug logging")
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
 

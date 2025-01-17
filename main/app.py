@@ -13,8 +13,10 @@ from auth.config import (
     initialize_redis_config,
 )
 from config import Settings, get_settings
+from config.logging import jwt_log, redis_log
 from example import router as example_router
 from monitoring import CrashReporter, EmailConfig, setup_crash_reporting
+from monitoring.crash_reporter import debug_log
 from v1.users.router import router as users_router
 
 # Configure logging
@@ -68,9 +70,9 @@ class Application(FastAPI):
             try:
                 redis_service = get_redis_service()
                 await redis_service.close()
-                print("Redis connection closed on shutdown")
+                redis_log("Redis connection closed on shutdown")
             except Exception as e:
-                print(f"Error closing Redis connection: {str(e)}")
+                logger.error(f"Error closing Redis connection: {str(e)}")
 
     async def initialize(self) -> None:
         """Initialize application components."""
@@ -79,11 +81,9 @@ class Application(FastAPI):
         self._initialized = True
 
         logging.basicConfig(level=logging.INFO)
-        print("Initializing application...")
         self.settings = get_settings()
 
         # Initialize JWT and Redis configs
-        print("Initializing JWT and Redis configs...")
         initialize_jwt_config()
         initialize_redis_config()
         self.jwt_config = get_jwt_config()
@@ -100,11 +100,11 @@ class Application(FastAPI):
         )
 
         # Initialize crash reporting before anything else
-        logger.info("Initializing crash reporter before other middleware...")
+        debug_log("Initializing crash reporter before other middleware...")
         self.crash_reporter = setup_crash_reporting(self, self.email_config)
 
         # Now configure other middleware
-        logger.info("Configuring additional middleware...")
+        debug_log("Configuring additional middleware...")
         self.add_middleware(
             CORSMiddleware,
             allow_origins=["*"],
@@ -112,8 +112,8 @@ class Application(FastAPI):
             allow_methods=["*"],
             allow_headers=["*"],
         )
-        logger.info("All middleware configured")
-        print("Setting up authentication...")
+        debug_log("All middleware configured")
+        jwt_log("Setting up authentication...")
         self.auth_config = AuthConfig(
             jwt_secret_key=self.settings.JWT_SECRET,
             jwt_algorithm=self.settings.JWT_ALGORITHM,
@@ -130,9 +130,6 @@ class Application(FastAPI):
         self.include_router(auth_router.router)
         self.include_router(users_router, prefix="/v1")
         self.include_router(example_router)
-
-        # Redis connection is already tested in setup_auth()
-        print("Application initialization complete")
 
 
 @asynccontextmanager
