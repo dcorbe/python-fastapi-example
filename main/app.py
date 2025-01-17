@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 from typing import Any, AsyncGenerator, Union
 
@@ -15,6 +16,17 @@ from config import Settings, get_settings
 from example import router as example_router
 from monitoring import CrashReporter, EmailConfig, setup_crash_reporting
 from v1.users.router import router as users_router
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+
+# Module logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 class Application(FastAPI):
@@ -66,6 +78,7 @@ class Application(FastAPI):
             return
         self._initialized = True
 
+        logging.basicConfig(level=logging.INFO)
         print("Initializing application...")
         self.settings = get_settings()
 
@@ -85,8 +98,21 @@ class Application(FastAPI):
             rate_limit_period=self.settings.ERROR_RATE_LIMIT_PERIOD,
             rate_limit_count=self.settings.ERROR_RATE_LIMIT_COUNT,
         )
+
+        # Initialize crash reporting before anything else
+        logger.info("Initializing crash reporter before other middleware...")
         self.crash_reporter = setup_crash_reporting(self, self.email_config)
 
+        # Now configure other middleware
+        logger.info("Configuring additional middleware...")
+        self.add_middleware(
+            CORSMiddleware,
+            allow_origins=["*"],
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+        logger.info("All middleware configured")
         print("Setting up authentication...")
         self.auth_config = AuthConfig(
             jwt_secret_key=self.settings.JWT_SECRET,
