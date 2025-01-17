@@ -1,7 +1,5 @@
 """Authentication configuration."""
 
-import os
-
 from pydantic import BaseModel, Field
 
 from config.logging import jwt_log, redis_log
@@ -11,21 +9,22 @@ class JWTConfig(BaseModel):
     """Centralized JWT configuration"""
 
     secret_key: str = Field(...)
-    algorithm: str = Field(default="HS256")
-    access_token_expire_minutes: int = Field(default=30)
+    algorithm: str = Field(...)
+    access_token_expire_minutes: int = Field(...)
 
     @classmethod
     def from_env(cls) -> "JWTConfig":
-        secret_key = os.getenv("JWT_SECRET", "")
-        if not secret_key:
+        from config import get_settings
+
+        settings = get_settings()
+
+        if not settings.JWT_SECRET:
             raise ValueError("JWT_SECRET environment variable must be set")
 
         return cls(
-            secret_key=secret_key,
-            algorithm=os.getenv("JWT_ALGORITHM", "HS256"),
-            access_token_expire_minutes=int(
-                os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30")
-            ),
+            secret_key=settings.JWT_SECRET,
+            algorithm=settings.JWT_ALGORITHM,
+            access_token_expire_minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES,
         )
 
 
@@ -53,16 +52,6 @@ class RedisConfig(BaseModel):
             f"Redis config initialized: host={config.host}, port={config.port}, db={config.db}"
         )
         return config
-
-
-class AuthConfig(BaseModel):
-    """Authentication configuration"""
-
-    jwt_secret_key: str = Field(...)
-    jwt_algorithm: str = Field(default="HS256")
-    access_token_expire_minutes: int = Field(default=30)
-    max_login_attempts: int = Field(default=5)
-    lockout_minutes: int = Field(default=15)
 
 
 # Global instance - initialized at startup

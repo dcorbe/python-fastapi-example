@@ -98,15 +98,27 @@ def test_user() -> User:
 
 
 @pytest.fixture
-def auth_config() -> AuthConfig:
+def auth_config(monkeypatch: pytest.MonkeyPatch) -> AuthConfig:
     """Create test auth config."""
-    return AuthConfig(
-        jwt_secret_key="test_secret",
-        jwt_algorithm="HS256",
-        access_token_expire_minutes=30,
-        max_login_attempts=3,
-        lockout_minutes=15,
+    # Mock settings for testing
+    from config import Settings
+
+    test_settings = Settings(
+        JWT_SECRET="test_secret",
+        JWT_ALGORITHM="HS256",
+        JWT_ACCESS_TOKEN_EXPIRE_MINUTES=30,
+        MAX_LOGIN_ATTEMPTS=3,
+        LOCKOUT_MINUTES=15,
+        # Required by Settings but not used in tests
+        POSTGRES_USER="test",
+        POSTGRES_PASSWORD="test",
+        POSTGRES_DB="test",
+        DATABASE_URL="test",
     )
+
+    monkeypatch.setattr("config.get_settings", lambda: test_settings)
+
+    return AuthConfig.from_env()
 
 
 @pytest.fixture

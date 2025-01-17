@@ -114,13 +114,7 @@ class Application(FastAPI):
         )
         debug_log("All middleware configured")
         jwt_log("Setting up authentication...")
-        self.auth_config = AuthConfig(
-            jwt_secret_key=self.settings.JWT_SECRET,
-            jwt_algorithm=self.settings.JWT_ALGORITHM,
-            access_token_expire_minutes=self.settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES,
-            max_login_attempts=self.settings.MAX_LOGIN_ATTEMPTS,
-            lockout_minutes=self.settings.LOCKOUT_MINUTES,
-        )
+        self.auth_config = AuthConfig.from_env()
 
         # Initialize auth service
         self.auth_service = await setup_auth(self, self.auth_config)
