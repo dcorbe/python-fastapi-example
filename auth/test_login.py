@@ -61,9 +61,9 @@ def app(
     app.include_router(auth_router.router)
 
     # Override database dependency
-    from database import get_db
+    from database import get_session
 
-    app.dependency_overrides[get_db] = lambda: mock_db
+    app.dependency_overrides[get_session] = lambda: mock_db
 
     return app
 

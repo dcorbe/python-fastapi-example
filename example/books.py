@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
 
 from auth import get_current_active_user
-from database import get_db
+from database import get_session
 from database.models.base import Base
 from v1.users.models import User
 
@@ -95,7 +95,7 @@ router = APIRouter(prefix="/books")
 async def create_book(
     user: Annotated[User, Depends(get_current_active_user)],
     book_data: BookCreate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_session),
 ) -> BookSchema:
     """Create a new book."""
     try:
@@ -146,7 +146,7 @@ async def create_book(
 )
 async def list_books(
     user: Annotated[User, Depends(get_current_active_user)],
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_session),
 ) -> List[BookSchema]:
     """Get all books."""
     stmt = select(Book)
@@ -184,7 +184,7 @@ async def list_books(
 async def read_book(
     user: Annotated[User, Depends(get_current_active_user)],
     book_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_session),
 ) -> BookSchema:
     """Get a book by its ID."""
     stmt = select(Book).where(Book.id == book_id)
@@ -229,7 +229,7 @@ async def update_book(
     user: Annotated[User, Depends(get_current_active_user)],
     book_id: UUID,
     update_data: BookUpdate,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_session),
 ) -> BookSchema:
     """Update a book's details."""
     stmt = select(Book).where(Book.id == book_id)
@@ -272,7 +272,7 @@ async def update_book(
 async def delete_book(
     user: Annotated[User, Depends(get_current_active_user)],
     book_id: UUID,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_session),
 ) -> None:
     """Delete a book."""
     stmt = select(Book).where(Book.id == book_id)

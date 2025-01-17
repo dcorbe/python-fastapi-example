@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database import get_db
+from database import get_session
 from v1.users.models import User
 
 from .dependencies import get_current_user, oauth2_scheme
@@ -50,7 +50,7 @@ class AuthRouter:
         )
         async def login(
             form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-            db: AsyncSession = Depends(get_db),
+            db: AsyncSession = Depends(get_session),
         ) -> Token:
             """Login endpoint."""
             user = await self.auth_service.authenticate_user(

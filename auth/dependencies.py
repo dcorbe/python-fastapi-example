@@ -7,7 +7,7 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database import get_db
+from database import get_session
 
 from .models import TokenData
 from .redis import RedisService
@@ -79,7 +79,7 @@ async def verify_token(
 
 async def get_current_user(
     token_data: Annotated[TokenData, Depends(verify_token)],
-    session: AsyncSession = Depends(get_db),
+    session: AsyncSession = Depends(get_session),
 ) -> Any:
     """Get current user after token verification."""
     try:

@@ -66,7 +66,7 @@ class Database:
             cls._session_factory = None
 
 
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
+async def get_session() -> AsyncGenerator[AsyncSession, None]:
     """FastAPI dependency that provides a database session."""
     async with Database.session() as session:
         yield session
