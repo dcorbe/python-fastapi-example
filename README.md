@@ -1,22 +1,41 @@
 # FastAPI Demo
 This is primarily a
-[FastAPI](https://github.com/fastapi/fastapi) application which is intended to be used as a teaching tool and reference 
-for building web APIs with Python.
+[FastAPI](https://github.com/fastapi/fastapi) application which is intended to be used as a learning tool and as a 
+reference for building API servers with Python.  On top of FastAPI, this project also provides a number of additional
+features:
 
+* Automatic handling of oauth2 and API tokens
+* Built-in telemetry
+* Built-in muti-tenant user management
+* A simple but powerful permissions system
+* A crash reporting system
 
 ## Table of Contents
+- [Usage](#usage)
 - [Core Dependencies](#core-dependencies)
-- [Setting Up A Development Environment](#setting-up-a-development-environment)
+- [Setting Up A Development Environment (Mac OS)](#setting-up-a-development-environment)
+- [Setting Up A Development Environment (Linux)](#setting-up-a-development-environment)
 - [Database Setup](#database-setup)
 - [Running the FastAPI Server](#running-the-fastapi-server)
 - [OpenAPI Debug Console](#openapi-debug-console)
 - [Type Checking](#type-checking)
+
+## Usage
+### Hello World
+
+### Examples
+See the [examples](./examples) directory for a collection of example endpoints that demonstrate various features of 
+FastAPI.
+
+### Documentation
+Coming Soon!
 
 ## Core Dependencies
 
 ### Web Framework and API
 - [**FastAPI**](https://fastapi.tiangolo.com/) - Modern web framework for building APIs
 - [**Pydantic**](https://docs.pydantic.dev/) - Data validation using Python type annotations
+- [**OpenTelemetry**](https://opentelemetry.io/) - Observability framework for telemetry and distributed tracing
 - [**email-validator**](https://github.com/JoshData/python-email-validator) - Email validation for Pydantic models
 
 ### Authentication and Security
@@ -27,10 +46,6 @@ for building web APIs with Python.
 - [**Redis**](https://redis.io/) - In-memory data structure store
 - [**SQLAlchemy**](https://www.sqlalchemy.org/) - FastAPI-compatible integration for database models
 - [**Alembic**](https://alembic.sqlalchemy.org/) - Database migrations
-- 
-### Computer Vision and Data Processing
-- [**OpenCV**](https://opencv.org/) - Computer vision and video processing
-- [**NumPy**](https://numpy.org/) - Numerical processing and array operations
 
 ### Development Tools
 - [**Docker**](https://www.docker.com/) - Containerization
@@ -71,6 +86,8 @@ poetry install
 ```bash
 pre-commit install
 ```
+
+## Setting Up A Development Environment (Linux)
 
 ## Database Setup
 
