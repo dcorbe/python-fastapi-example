@@ -20,8 +20,12 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Import all models here so they're available for autogenerate
-# They should be imported from their respective API modules
-target_metadata = None  # This will be populated by imported models
+from auth.models import *  # noqa
+from database.models.base import Base
+from example.books import Book  # noqa
+from v1.users.models import *  # noqa
+
+target_metadata = Base.metadata
 
 
 def do_run_migrations(connection: Connection) -> None:

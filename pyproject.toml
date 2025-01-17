@@ -59,6 +59,7 @@ extend-exclude = '''
 # A regex preceded with ^/ will apply only to files and directories
 # in the root of the project.
 ^/dist
+^/database/migrations/
 '''
 
 [tool.isort]
@@ -70,7 +71,7 @@ use_parentheses = true
 ensure_newline_before_comments = true
 line_length = 88
 split_on_trailing_comma = true
-extend_skip = ["dist"]
+extend_skip = ["dist", "database/migrations"]
 
 [tool.mypy]
 python_version = "3.12"
@@ -96,6 +97,10 @@ warn_required_dynamic_aliases = true
 [[tool.mypy.overrides]]
 module = ["database.*", "user.*"]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["database.migrations.*"]
+ignore_errors = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "strict"
