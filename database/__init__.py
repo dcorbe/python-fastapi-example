@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import os
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator, Optional
-from urllib.parse import urlparse
 
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -14,6 +12,8 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from .config import get_database_url
+
 
 class Database:
     """Database connection manager."""
@@ -21,35 +21,11 @@ class Database:
     _engine: Optional[AsyncEngine] = None
     _session_factory: Optional[async_sessionmaker[AsyncSession]] = None
 
-    @staticmethod
-    def _convert_database_url(url: str) -> str:
-        """Convert standard postgres URL to asyncpg format."""
-        parsed = urlparse(url)
-
-        # Handle different prefix formats
-        if parsed.scheme in ("postgresql", "postgres"):
-            scheme = "postgresql+asyncpg"
-        else:
-            raise ValueError(f"Unsupported database scheme: {parsed.scheme}")
-
-        # Reconstruct the URL with the new scheme
-        return url.replace(f"{parsed.scheme}://", f"{scheme}://", 1)
-
     @classmethod
     def init(cls) -> None:
         """Initialize database connection."""
-        url = os.getenv("DATABASE_URL")
-        if url is None:
-            raise ValueError("DATABASE_URL environment variable must be set")
-
-        # Convert URL to asyncpg format
-        try:
-            sql_url = cls._convert_database_url(url)
-            print(
-                f"Using SQLAlchemy URL: {sql_url}"
-            )  # Safe to print entire URL here as it will be masked by logs
-        except ValueError as e:
-            raise ValueError(f"Invalid database URL: {str(e)}")
+        sql_url = get_database_url()
+        print(f"Using SQLAlchemy URL: {sql_url}")  # Will be masked by logs
 
         cls._engine = create_async_engine(
             sql_url,

@@ -11,10 +11,9 @@ from fastapi.testclient import TestClient
 
 from v1.users.models import User
 
-from .config import RedisConfig
 from .dependencies import set_auth_service, set_redis_service
 from .models import AuthConfig
-from .redis import AsyncRedis, RedisService
+from .redis import AsyncRedis, RedisConfig, RedisService
 from .routes import AuthRouter
 from .service import AuthService
 
@@ -46,19 +45,26 @@ class MockRedis(AsyncRedis):
         pass
 
 
-pytestmark = pytest.mark.asyncio
-
-
 @pytest.fixture
-def app(auth_service: AuthService, redis_service: RedisService) -> FastAPI:
+def app(
+    auth_service: AuthService, redis_service: RedisService, mock_db: AsyncMock
+) -> FastAPI:
     """Create test FastAPI application."""
     app = FastAPI()
+
     # Set services in dependencies
     set_auth_service(auth_service)
     set_redis_service(redis_service)
+
     # Add routes
     auth_router = AuthRouter(auth_service)
     app.include_router(auth_router.router)
+
+    # Override database dependency
+    from database import get_db
+
+    app.dependency_overrides[get_db] = lambda: mock_db
+
     return app
 
 
@@ -66,66 +72,6 @@ def app(auth_service: AuthService, redis_service: RedisService) -> FastAPI:
 def client(app: FastAPI) -> TestClient:
     """Create test client."""
     return TestClient(app)
-
-
-async def test_logout_endpoint_success(
-    client: TestClient,
-    auth_service: AuthService,
-    redis_service: RedisService,
-    test_user: User,
-) -> None:
-    """Test successful logout."""
-    # Create a valid token
-    token = auth_service.create_access_token({"sub": test_user.email})
-    cleaned_token = redis_service._clean_token(token)
-
-    # Configure mock Redis
-    assert isinstance(redis_service.redis, MockRedis)  # Type check for mypy
-    redis_service.redis._storage = {}
-
-    # Test logout endpoint
-    response = client.post("/auth/logout", headers={"Authorization": f"Bearer {token}"})
-    assert response.status_code == 200
-    assert response.json() == {"message": "Successfully logged out"}
-
-    # Verify token was blacklisted
-    key = redis_service._get_blacklist_key(cleaned_token)
-    assert await redis_service.redis.exists(key) == 1
-    assert await redis_service.redis.get(key) == cleaned_token
-
-
-async def test_logout_endpoint_no_token(client: TestClient) -> None:
-    """Test logout without token."""
-    response = client.post("/auth/logout")
-    assert response.status_code == 401
-    assert "Not authenticated" in response.json()["detail"]
-
-
-async def test_logout_endpoint_invalid_token(client: TestClient) -> None:
-    """Test logout with invalid token."""
-    response = client.post(
-        "/auth/logout", headers={"Authorization": "Bearer invalid_token"}
-    )
-    assert response.status_code == 401
-    assert "Could not validate credentials" in response.json()["detail"]
-
-
-async def test_logout_endpoint_expired_token(
-    client: TestClient,
-    auth_service: AuthService,
-) -> None:
-    """Test logout with expired token."""
-    # Create an expired token
-    expired_time = datetime.now(UTC) - timedelta(minutes=1)
-    token = jwt.encode(
-        {"sub": "test@example.com", "exp": expired_time.timestamp()},
-        auth_service.config.jwt_secret_key,
-        algorithm=auth_service.config.jwt_algorithm,
-    )
-
-    response = client.post("/auth/logout", headers={"Authorization": f"Bearer {token}"})
-    assert response.status_code == 401
-    assert "Token has expired" in response.json()["detail"]
 
 
 @pytest.fixture
@@ -143,6 +89,7 @@ def mock_db() -> AsyncMock:
 def test_user() -> User:
     """Create a test user."""
     return User(
+        id=1,
         email="test@example.com",
         password_hash="some_hash",  # The actual hash doesn't matter as we're mocking verify_password
         created_at=datetime.now(UTC),
@@ -187,6 +134,77 @@ def auth_service(
         yield service
 
 
+@pytest.mark.asyncio
+async def test_logout_endpoint_success(
+    client: TestClient,
+    auth_service: AuthService,
+    redis_service: RedisService,
+    test_user: User,
+    mock_db: AsyncMock,
+) -> None:
+    """Test successful logout."""
+    # Create a valid token
+    token = auth_service.create_access_token({"sub": test_user.email})
+    cleaned_token = redis_service._clean_token(token)
+
+    # Configure mock Redis
+    assert isinstance(redis_service.redis, MockRedis)  # Type check for mypy
+    redis_service.redis._storage = {}
+
+    # Configure mock database response
+    mock_result = MagicMock()
+    mock_result.scalar_one_or_none.return_value = test_user
+    mock_db.execute.return_value = mock_result
+
+    # Test logout endpoint
+    response = client.post("/auth/logout", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 200
+    assert response.json() == {"message": "Successfully logged out"}
+
+    # Verify token was blacklisted
+    key = redis_service._get_blacklist_key(cleaned_token)
+    assert await redis_service.redis.exists(key) == 1
+    assert await redis_service.redis.get(key) == cleaned_token
+
+
+@pytest.mark.asyncio
+async def test_logout_endpoint_no_token(client: TestClient) -> None:
+    """Test logout without token."""
+    response = client.post("/auth/logout")
+    assert response.status_code == 401
+    assert "Not authenticated" in response.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_logout_endpoint_invalid_token(client: TestClient) -> None:
+    """Test logout with invalid token."""
+    response = client.post(
+        "/auth/logout", headers={"Authorization": "Bearer invalid_token"}
+    )
+    assert response.status_code == 401
+    assert "Could not validate credentials" in response.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_logout_endpoint_expired_token(
+    client: TestClient,
+    auth_service: AuthService,
+) -> None:
+    """Test logout with expired token."""
+    # Create an expired token
+    expired_time = datetime.now(UTC) - timedelta(minutes=1)
+    token = jwt.encode(
+        {"sub": "test@example.com", "exp": expired_time.timestamp()},
+        auth_service.config.jwt_secret_key,
+        algorithm=auth_service.config.jwt_algorithm,
+    )
+
+    response = client.post("/auth/logout", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 401
+    assert "Token has expired" in response.json()["detail"]
+
+
+@pytest.mark.asyncio
 async def test_authentication_success(
     auth_service: AuthService,
     mock_db: AsyncMock,
@@ -204,6 +222,7 @@ async def test_authentication_success(
     await mock_db.commit()
 
 
+@pytest.mark.asyncio
 async def test_authentication_failure_invalid_password(
     auth_service: AuthService,
     mock_db: AsyncMock,
@@ -220,6 +239,7 @@ async def test_authentication_failure_invalid_password(
     assert "Incorrect username or password" in exc_info.value.detail
 
 
+@pytest.mark.asyncio
 async def test_authentication_failure_invalid_user(
     auth_service: AuthService,
     mock_db: AsyncMock,
@@ -237,6 +257,7 @@ async def test_authentication_failure_invalid_user(
     assert "Incorrect username or password" in exc_info.value.detail
 
 
+@pytest.mark.asyncio
 async def test_blacklist_token_success(
     auth_service: AuthService,
     redis_service: RedisService,
@@ -259,6 +280,7 @@ async def test_blacklist_token_success(
     assert await redis_service.redis.get(key) == cleaned_token
 
 
+@pytest.mark.asyncio
 async def test_blacklist_expired_token(
     auth_service: AuthService,
     redis_service: RedisService,
@@ -280,6 +302,7 @@ async def test_blacklist_expired_token(
     assert not redis_service.redis._storage
 
 
+@pytest.mark.asyncio
 async def test_blacklist_invalid_token(
     auth_service: AuthService,
     redis_service: RedisService,
@@ -296,6 +319,7 @@ async def test_blacklist_invalid_token(
     assert not redis_service.redis._storage
 
 
+@pytest.mark.asyncio
 async def test_decode_blacklisted_token(
     auth_service: AuthService,
     redis_service: RedisService,
@@ -317,6 +341,7 @@ async def test_decode_blacklisted_token(
     assert "Token has been invalidated" in exc_info.value.detail
 
 
+@pytest.mark.asyncio
 async def test_lockout_after_max_attempts(
     auth_service: AuthService,
     mock_db: AsyncMock,

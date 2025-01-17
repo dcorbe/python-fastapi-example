@@ -12,7 +12,7 @@ from auth.models import AuthConfig
 from auth.redis import RedisService
 from auth.service import AuthService
 from config import get_settings
-from database.session import async_session_factory
+from database import Database
 from v1.users.models import User
 
 
@@ -40,7 +40,7 @@ async def main(email: str, password: str) -> None:
     auth_service = AuthService(auth_config, redis_service)
 
     # Setup database
-    async with async_session_factory() as session:
+    async with Database.session() as session:
         # Check if user exists
         stmt = select(User).where(User.email.ilike(email))
         result = await session.execute(stmt)
