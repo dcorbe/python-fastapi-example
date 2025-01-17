@@ -2,44 +2,17 @@
 
 from __future__ import annotations
 
-import os
-from urllib.parse import urlparse
+from config import get_settings
 
 
 def get_database_url() -> str:
-    """Get database URL from environment with proper driver."""
-    url = os.getenv("DATABASE_URL")
-    if url is None:
-        raise ValueError("DATABASE_URL environment variable must be set")
-
-    parsed = urlparse(url)
-
-    if parsed.scheme in ("postgresql", "postgres"):
-        scheme = "postgresql+asyncpg"
-        return url.replace(f"{parsed.scheme}://", f"{scheme}://", 1)
-
-    # Already has the correct scheme
-    if parsed.scheme == "postgresql+asyncpg":
-        return url
-
-    raise ValueError(f"Unsupported database scheme: {parsed.scheme}")
+    """Get database URL from settings with proper driver."""
+    settings = get_settings()
+    url = f"postgresql://{settings.DB_USER}:{settings.DB_PASSWORD}@localhost:5432/{settings.DB_NAME}"
+    return url.replace("postgresql://", "postgresql+asyncpg://", 1)
 
 
 def get_sync_database_url() -> str:
     """Get synchronous database URL for migrations."""
-    url = os.getenv("DATABASE_URL")
-    if url is None:
-        raise ValueError("DATABASE_URL environment variable must be set")
-
-    parsed = urlparse(url)
-
-    # Convert to asyncpg URL first to ensure consistent handling
-    if parsed.scheme in ("postgresql", "postgres"):
-        url = url.replace(f"{parsed.scheme}://", "postgresql+asyncpg://", 1)
-        parsed = urlparse(url)
-
-    # Now convert asyncpg to sqlalchemy sync URL
-    if parsed.scheme == "postgresql+asyncpg":
-        return url.replace("postgresql+asyncpg://", "postgresql://", 1)
-
-    raise ValueError(f"Unsupported database scheme: {parsed.scheme}")
+    settings = get_settings()
+    return f"postgresql://{settings.DB_USER}:{settings.DB_PASSWORD}@localhost:5432/{settings.DB_NAME}"

@@ -19,16 +19,18 @@ from monitoring import CrashReporter, EmailConfig, setup_crash_reporting
 from monitoring.crash_reporter import debug_log
 from v1.users.router import router as users_router
 
+settings = get_settings()
+
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
+    level=getattr(logging, settings.LOG_LEVEL),
+    format=settings.LOG_FORMAT,
+    datefmt=settings.LOG_DATE_FORMAT,
 )
 
 # Module logger
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(getattr(logging, settings.LOG_LEVEL))
 
 
 class Application(FastAPI):
@@ -42,24 +44,23 @@ class Application(FastAPI):
     auth_service: Union[AuthService, None] = None
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        # Initialize FastAPI with just the essential OpenAPI settings
+        # Initialize FastAPI with settings from config
         super().__init__(
             *args,
-            title="BSS Backend API",
-            description="Bridge Security Solutions Backend API",
-            version="0.1.0",
+            title=settings.API_TITLE,
+            description=settings.API_DESCRIPTION,
+            version=settings.API_VERSION,
             **kwargs,
         )
         self._initialized = False
 
-        # Configure CORS middleware during initialization
-        # TODO: Do not allow all origins in production
+        # Configure CORS middleware using settings
         self.add_middleware(
             CORSMiddleware,
-            allow_origins=["*"],
-            allow_credentials=True,
-            allow_methods=["*"],
-            allow_headers=["*"],
+            allow_origins=settings.CORS_ORIGINS,
+            allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
+            allow_methods=settings.CORS_ALLOW_METHODS,
+            allow_headers=settings.CORS_ALLOW_HEADERS,
         )
 
         @self.on_event("shutdown")
@@ -80,7 +81,11 @@ class Application(FastAPI):
             return
         self._initialized = True
 
-        logging.basicConfig(level=logging.INFO)
+        logging.basicConfig(
+            level=getattr(logging, settings.LOG_LEVEL),
+            format=settings.LOG_FORMAT,
+            datefmt=settings.LOG_DATE_FORMAT,
+        )
         self.settings = get_settings()
 
         # Initialize JWT and Redis configs
@@ -89,12 +94,16 @@ class Application(FastAPI):
         self.jwt_config = get_jwt_config()
 
         self.email_config = EmailConfig(
-            smtp_host=self.settings.SMTP_HOST,
-            smtp_port=self.settings.SMTP_PORT,
-            smtp_username=self.settings.SMTP_USERNAME,
-            smtp_password=self.settings.SMTP_PASSWORD,
-            from_email=self.settings.get_from_email(),
-            to_emails=self.settings.get_email_list(),
+            smtp_host=self.settings.EMAIL_HOST,
+            smtp_port=self.settings.EMAIL_PORT,
+            smtp_username=self.settings.EMAIL_USERNAME,
+            smtp_password=self.settings.EMAIL_PASSWORD,
+            from_email=self.settings.EMAIL_FROM,
+            to_emails=[
+                email.strip()
+                for email in self.settings.EMAIL_TO.split(",")
+                if email.strip()
+            ],
             rate_limit_period=self.settings.ERROR_RATE_LIMIT_PERIOD,
             rate_limit_count=self.settings.ERROR_RATE_LIMIT_COUNT,
         )
@@ -105,13 +114,6 @@ class Application(FastAPI):
 
         # Now configure other middleware
         debug_log("Configuring additional middleware...")
-        self.add_middleware(
-            CORSMiddleware,
-            allow_origins=["*"],
-            allow_credentials=True,
-            allow_methods=["*"],
-            allow_headers=["*"],
-        )
         debug_log("All middleware configured")
         jwt_log("Setting up authentication...")
         self.auth_config = AuthConfig.from_env()

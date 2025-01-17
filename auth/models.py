@@ -20,15 +20,15 @@ class AuthConfig(BaseModel):
 
         settings = get_settings()
 
-        if not settings.JWT_SECRET:
-            raise ValueError("JWT_SECRET environment variable must be set")
+        if not settings.AUTH_SECRET:
+            raise ValueError("AUTH_SECRET environment variable must be set")
 
         return cls(
-            jwt_secret_key=settings.JWT_SECRET,
-            jwt_algorithm=settings.JWT_ALGORITHM,
-            access_token_expire_minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES,
-            max_login_attempts=settings.MAX_LOGIN_ATTEMPTS,
-            lockout_minutes=settings.LOCKOUT_MINUTES,
+            jwt_secret_key=settings.AUTH_SECRET,
+            jwt_algorithm=settings.AUTH_ALGORITHM,
+            access_token_expire_minutes=settings.AUTH_TOKEN_EXPIRE_MINUTES,
+            max_login_attempts=settings.AUTH_MAX_LOGIN_ATTEMPTS,
+            lockout_minutes=settings.AUTH_LOCKOUT_MINUTES,
         )
 
 

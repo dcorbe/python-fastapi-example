@@ -58,13 +58,21 @@ async def verify_token(
 ) -> TokenData:
     """Verify token is valid and not blacklisted."""
     try:
-        print("\n=== Token Verification Start ===")
-        print(f"1. Received token: {token}")
+        from config import get_settings
+
+        settings = get_settings()
+
+        if settings.AUTH_DEBUG:
+            print("\n=== Token Verification Start ===")
+            print(f"1. Received token: {token}")
 
         # Validate and decode token (includes blacklist check)
         token_data = await auth_service.decode_token(token)
-        print("2. Token validated successfully")
-        print("=== Token Verification Complete ===\n")
+
+        if settings.AUTH_DEBUG:
+            print("2. Token validated successfully")
+            print("=== Token Verification Complete ===\n")
+
         return token_data
     except HTTPException:
         raise

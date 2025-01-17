@@ -51,18 +51,25 @@ class AuthService:
 
     def _clean_token(self, token: str) -> str:
         """Remove Bearer prefix and any whitespace."""
-        print("\n=== Cleaning Token ===")
-        print("1. Original token:", token)
+        from config import get_settings
+
+        settings = get_settings()
+
+        if settings.AUTH_DEBUG:
+            print("\n=== Cleaning Token ===")
+            print("1. Original token:", token)
 
         # Remove 'Bearer ' prefix if present
         if token.startswith("Bearer "):
             token = token[7:]
-            print("2. Removed Bearer prefix")
+            if settings.AUTH_DEBUG:
+                print("2. Removed Bearer prefix")
 
         # Remove any whitespace
         token = token.strip()
-        print("3. Final cleaned token:", token)
-        print("=== Token Cleaning Complete ===\n")
+        if settings.AUTH_DEBUG:
+            print("3. Final cleaned token:", token)
+            print("=== Token Cleaning Complete ===\n")
         return token
 
     async def _check_blacklist(self, token: str) -> None:

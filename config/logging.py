@@ -13,12 +13,12 @@ def get_startup_logger() -> logging.Logger:
 
 
 def redis_log(msg: str) -> None:
-    """Log Redis-related messages only if DEBUG_REDIS is enabled."""
-    if get_settings().DEBUG_REDIS:
+    """Log Redis-related messages only if REDIS_DEBUG is enabled."""
+    if get_settings().REDIS_DEBUG:
         get_startup_logger().info(msg)
 
 
 def jwt_log(msg: str) -> None:
-    """Log JWT-related messages only if DEBUG_JWT is enabled."""
-    if get_settings().DEBUG_JWT:
+    """Log JWT-related messages only if AUTH_DEBUG is enabled."""
+    if get_settings().AUTH_DEBUG:
         get_startup_logger().info(msg)

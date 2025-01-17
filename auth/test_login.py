@@ -8,6 +8,7 @@ import jwt
 import pytest
 from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
+from pydantic_settings import SettingsConfigDict
 
 from v1.users.models import User
 
@@ -103,17 +104,30 @@ def auth_config(monkeypatch: pytest.MonkeyPatch) -> AuthConfig:
     # Mock settings for testing
     from config import Settings
 
-    test_settings = Settings(
-        JWT_SECRET="test_secret",
-        JWT_ALGORITHM="HS256",
-        JWT_ACCESS_TOKEN_EXPIRE_MINUTES=30,
-        MAX_LOGIN_ATTEMPTS=3,
-        LOCKOUT_MINUTES=15,
+    class TestSettings(Settings):
+        model_config = SettingsConfigDict(env_file=None, env_nested_delimiter=None)
+
+    test_settings = TestSettings(
+        AUTH_SECRET="test_secret",
+        AUTH_ALGORITHM="HS256",
+        AUTH_TOKEN_EXPIRE_MINUTES=30,
+        AUTH_MAX_LOGIN_ATTEMPTS=3,
+        AUTH_LOCKOUT_MINUTES=15,
         # Required by Settings but not used in tests
-        POSTGRES_USER="test",
-        POSTGRES_PASSWORD="test",
-        POSTGRES_DB="test",
-        DATABASE_URL="test",
+        DB_USER="test",
+        DB_PASSWORD="test",
+        DB_NAME="test",
+        DB_URL="test",
+        # Required email settings
+        EMAIL_USERNAME="test@example.com",
+        EMAIL_PASSWORD="test",
+        EMAIL_FROM="test@example.com",
+        EMAIL_TO="test@example.com",
+        # CORS settings
+        CORS_ORIGINS=["*"],
+        CORS_ALLOW_METHODS=["*"],
+        CORS_ALLOW_HEADERS=["*"],
+        CORS_ALLOW_CREDENTIALS=True,
     )
 
     monkeypatch.setattr("config.get_settings", lambda: test_settings)

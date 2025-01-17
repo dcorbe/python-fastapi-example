@@ -18,13 +18,13 @@ class JWTConfig(BaseModel):
 
         settings = get_settings()
 
-        if not settings.JWT_SECRET:
-            raise ValueError("JWT_SECRET environment variable must be set")
+        if not settings.AUTH_SECRET:
+            raise ValueError("AUTH_SECRET environment variable must be set")
 
         return cls(
-            secret_key=settings.JWT_SECRET,
-            algorithm=settings.JWT_ALGORITHM,
-            access_token_expire_minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES,
+            secret_key=settings.AUTH_SECRET,
+            algorithm=settings.AUTH_ALGORITHM,
+            access_token_expire_minutes=settings.AUTH_TOKEN_EXPIRE_MINUTES,
         )
 
 

@@ -4,7 +4,14 @@ from datetime import UTC, datetime
 from typing import Optional
 from uuid import UUID, uuid4
 
-from sqlalchemy import Boolean, DateTime, Index, Integer, String, func
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    Index,
+    Integer,
+    String,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from database.models.base import Base
@@ -14,10 +21,10 @@ class User(Base):
     """User database model."""
 
     __tablename__ = "users"
-    __table_args__ = (Index("ix_users_email_lower", func.lower("email"), unique=True),)
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     email: Mapped[str] = mapped_column(String(255), nullable=False)
+    __table_args__ = (Index("ix_users_email_lower", func.lower(email), unique=True),)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     email_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(

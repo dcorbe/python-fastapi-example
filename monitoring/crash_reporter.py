@@ -25,8 +25,8 @@ logger.setLevel(logging.INFO)
 
 
 def debug_log(msg: str) -> None:
-    """Log debug messages only if DEBUG_CRASH_REPORTER is enabled"""
-    if get_settings().DEBUG_CRASH_REPORTER:
+    """Log debug messages only if ERROR_DEBUG is enabled"""
+    if get_settings().ERROR_DEBUG:
         logger.info(msg)
 
 

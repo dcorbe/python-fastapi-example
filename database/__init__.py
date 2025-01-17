@@ -32,7 +32,7 @@ class Database:
         settings = get_settings()
         cls._engine = create_async_engine(
             sql_url,
-            echo=settings.SQL_LOGGING,
+            echo=settings.DB_SQL_LOGGING,
             pool_pre_ping=True,
             pool_size=5,
             max_overflow=10,
