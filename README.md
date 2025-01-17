@@ -21,21 +21,26 @@ for building web APIs with Python.
 
 ### Authentication and Security
 - [**PyJWT**](https://pyjwt.readthedocs.io/) - JSON Web Token implementation [with crypto]
-- [**Passlib**](https://passlib.readthedocs.io/) - Password hashing library [with bcrypt]
 
-### Database
-- [**SQLAlchemy**](https://www.sqlalchemy.org/) - PostgreSQL adapter for Python
-
+### Infrastructure and Database
+- [**PostgreSQL**](https://www.postgresql.org/) - Open-source relational database
+- [**Redis**](https://redis.io/) - In-memory data structure store
+- [**SQLAlchemy**](https://www.sqlalchemy.org/) - FastAPI-compatible integration for database models
+- [**Alembic**](https://alembic.sqlalchemy.org/) - Database migrations
+- 
 ### Computer Vision and Data Processing
 - [**OpenCV**](https://opencv.org/) - Computer vision and video processing
 - [**NumPy**](https://numpy.org/) - Numerical processing and array operations
 
 ### Development Tools
+- [**Docker**](https://www.docker.com/) - Containerization
 - [**mypy**](https://mypy-lang.org/) - Static type checker
 - [**pre-commit**](https://pre-commit.com/) - Git hooks framework
-- [**PyYAML**](https://pyyaml.org/) - YAML parsing and writing
+- [**Black**](https://black.readthedocs.io/) - Code formatter
+- [**Flake8**](https://flake8.pycqa.org/) - Code linter
 
-## Setting Up A Development Environment
+
+## Setting Up A Development Environment (Mac OS)
 1. Install Python 3.12:
 ```bash
 brew install python@3.12
@@ -79,14 +84,14 @@ cp .env.example .env
 
 2. Start the PostgreSQL database:
 ```bash
-# Start PostgreSQL using Docker Compose
-docker-compose up -d postgres
+# Start Postgre and Redis
+docker-compose up
 
 # Wait for the health check to pass
 docker-compose ps
 ```
 
-3. Run database migrations:
+3. Run database migrations (for the first time:
 ```bash
 # Inside poetry shell
 alembic upgrade head
@@ -119,7 +124,8 @@ This will create your initial user with the specified email and password. You ca
    ```
 
 ## OpenAPI Debug Console
-FastAPI automatically generates interactive API documentation using OpenAPI (formerly known as Swagger). The debug console provides a convenient way to explore and test the API endpoints.
+FastAPI automatically generates interactive API documentation using OpenAPI (formerly known as Swagger). The debug 
+console provides a convenient way to explore and test API endpoints.
 
 To access the OpenAPI debug console:
 
@@ -127,15 +133,3 @@ To access the OpenAPI debug console:
 2. Open your web browser and navigate to:
    - Swagger UI: http://localhost:8000/docs
    - Alternative ReDoc UI: http://localhost:8000/redoc
-
-The debug console provides:
-- Interactive documentation for all API endpoints
-- Request/response schema information
-- Built-in API testing interface
-- Authentication support (use the "Authorize" button with your JWT token)
-
-To test authenticated endpoints:
-1. Click the "Authorize" button at the top of the page
-2. Enter your JWT token in the format: `Bearer your_token_here`
-3. Click "Authorize" to save
-4. You can now test protected endpoints directly from the console
