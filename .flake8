@@ -34,5 +34,3 @@ per-file-ignores =
     # Allow unused imports and non-top imports in Alembic env.py (for model registration)
     database/migrations/env.py: F401,E402
     alembic/env.py: F401,E402
-    # Allow nested if statements in user operations where they improve readability
-    user/operations.py: SIM102
