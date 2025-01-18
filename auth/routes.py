@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from config.logging import logger
 from database import get_session
 from v1.users.models import User
 
@@ -78,20 +79,20 @@ class AuthRouter:
         ) -> dict[str, str]:
             """Logout endpoint."""
             try:
-                print("\n=== Logout Process Start ===")
-                print(f"1. Processing logout for user: {current_user.email}")
+                logger.debug("=== Logout Process Start ===")
+                logger.debug("1. Processing logout for user: %s", current_user.email)
 
                 # Blacklist the raw token
                 await self.auth_service.blacklist_token(token)
-                print("2. Token blacklisted successfully")
-                print("=== Logout Process Complete ===\n")
+                logger.debug("2. Token blacklisted successfully")
+                logger.debug("=== Logout Process Complete ===")
 
                 return {"message": "Successfully logged out"}
             except HTTPException as e:
                 # Re-raise HTTPException with original status code and details
                 raise e
             except Exception as e:
-                print(f"Error during logout: {str(e)}")
+                logger.error("Error during logout: %s", str(e))
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Could not validate credentials",

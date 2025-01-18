@@ -7,6 +7,7 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from config.logging import logger
 from database import get_session
 
 from .models import TokenData
@@ -63,21 +64,21 @@ async def verify_token(
         settings = get_settings()
 
         if settings.AUTH_DEBUG:
-            print("\n=== Token Verification Start ===")
-            print(f"1. Received token: {token}")
+            logger.debug("=== Token Verification Start ===")
+            logger.debug("1. Received token: %s", token)
 
         # Validate and decode token (includes blacklist check)
         token_data = await auth_service.decode_token(token)
 
         if settings.AUTH_DEBUG:
-            print("2. Token validated successfully")
-            print("=== Token Verification Complete ===\n")
+            logger.debug("2. Token validated successfully")
+            logger.debug("=== Token Verification Complete ===")
 
         return token_data
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error verifying token: {str(e)}")
+        logger.error("Error verifying token: %s", str(e))
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
@@ -117,7 +118,7 @@ async def get_current_user(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error in get_current_user: {str(e)}")
+        logger.error("Error in get_current_user: %s", str(e))
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",

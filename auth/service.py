@@ -9,6 +9,8 @@ from jwt.exceptions import ExpiredSignatureError, PyJWTError
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from config.logging import logger
+
 from .models import AuthConfig, LoginAttempt, TokenData
 from .password import hash_password, verify_password
 from .redis import RedisService
@@ -56,20 +58,20 @@ class AuthService:
         settings = get_settings()
 
         if settings.AUTH_DEBUG:
-            print("\n=== Cleaning Token ===")
-            print("1. Original token:", token)
+            logger.debug("=== Cleaning Token ===")
+            logger.debug("1. Original token: %s", token)
 
         # Remove 'Bearer ' prefix if present
         if token.startswith("Bearer "):
             token = token[7:]
             if settings.AUTH_DEBUG:
-                print("2. Removed Bearer prefix")
+                logger.debug("2. Removed Bearer prefix")
 
         # Remove any whitespace
         token = token.strip()
         if settings.AUTH_DEBUG:
-            print("3. Final cleaned token:", token)
-            print("=== Token Cleaning Complete ===\n")
+            logger.debug("3. Final cleaned token: %s", token)
+            logger.debug("=== Token Cleaning Complete ===")
         return token
 
     async def _check_blacklist(self, token: str) -> None:
