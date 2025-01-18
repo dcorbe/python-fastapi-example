@@ -1,7 +1,7 @@
 import json
 import logging
 from functools import lru_cache
-from typing import List
+from typing import List, Union
 
 from email_validator import EmailNotValidError, validate_email
 from pydantic import Field, field_validator
@@ -10,7 +10,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 logger = logging.getLogger(__name__)
 
 
-def parse_json_list(value: str) -> List[str] | None:
+def parse_json_list(value: str) -> Union[List[str], None]:
     """Parse a JSON string into a list of strings."""
     if not (value.startswith("[") and value.endswith("]")):
         return None
@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
     REDIS_DB: int = 1  # Use a separate database for token blacklisting
-    REDIS_PASSWORD: str | None = None
+    REDIS_PASSWORD: Union[str, None] = None
     REDIS_DEBUG: bool = Field(default=False, description="Enable Redis debug logging")
 
     # Authentication Configuration
@@ -123,7 +123,7 @@ class Settings(BaseSettings):
     CORS_ALLOW_HEADERS: List[str] = Field(default=["*"])
 
     @field_validator("CORS_ORIGINS", mode="before")
-    def validate_cors_origins(cls, v: str | List[str]) -> List[str]:
+    def validate_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
         if isinstance(v, list):
             return v
         if not v or v == "*" or not isinstance(v, str):
@@ -140,7 +140,7 @@ class Settings(BaseSettings):
         return origins if origins else ["*"]
 
     @field_validator("CORS_ALLOW_METHODS", mode="before")
-    def validate_cors_methods(cls, v: str | List[str]) -> List[str]:
+    def validate_cors_methods(cls, v: Union[str, List[str]]) -> List[str]:
         default_methods = ["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"]
         if isinstance(v, list):
             return v
@@ -158,7 +158,7 @@ class Settings(BaseSettings):
         return methods if methods else default_methods
 
     @field_validator("CORS_ALLOW_HEADERS", mode="before")
-    def validate_cors_headers(cls, v: str | List[str]) -> List[str]:
+    def validate_cors_headers(cls, v: Union[str, List[str]]) -> List[str]:
         if isinstance(v, list):
             return v
         if not v or v == "*" or not isinstance(v, str):

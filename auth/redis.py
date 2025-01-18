@@ -2,7 +2,7 @@
 
 import hashlib
 from datetime import timedelta
-from typing import Any, Protocol, runtime_checkable
+from typing import Any, Protocol, Union, runtime_checkable
 
 import redis.asyncio as redis
 from fastapi import HTTPException, status
@@ -20,7 +20,7 @@ class AsyncRedis(Protocol):
 
     async def setex(self, key: str, ttl: int, value: str) -> bool: ...
     async def exists(self, key: str) -> int: ...
-    async def get(self, key: str) -> str | None: ...
+    async def get(self, key: str) -> Union[str, None]: ...
     async def aclose(self) -> None: ...
 
 

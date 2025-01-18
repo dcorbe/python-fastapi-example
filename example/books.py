@@ -1,7 +1,7 @@
 """Example of database queries and async route handlers."""
 
 from datetime import UTC, datetime
-from typing import Annotated, List
+from typing import Annotated, List, Union
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -25,7 +25,7 @@ class Book(Base):
     id: Mapped[UUID] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     author: Mapped[str] = mapped_column(String(255), nullable=False)
-    description: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    description: Mapped[Union[str, None]] = mapped_column(String(1000), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
@@ -37,7 +37,7 @@ class BookBase(BaseModel):
 
     title: str
     author: str
-    description: str | None = None
+    description: Union[str, None] = None
 
 
 class BookCreate(BookBase):
@@ -49,9 +49,9 @@ class BookCreate(BookBase):
 class BookUpdate(BaseModel):
     """Schema for updating a book."""
 
-    title: str | None = None
-    author: str | None = None
-    description: str | None = None
+    title: Union[str, None] = None
+    author: Union[str, None] = None
+    description: Union[str, None] = None
 
 
 class BookSchema(BookBase):

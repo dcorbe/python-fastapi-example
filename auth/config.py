@@ -1,5 +1,7 @@
 """Authentication configuration."""
 
+from typing import Union
+
 from pydantic import BaseModel, Field
 
 from config.logging import jwt_log, redis_log
@@ -34,7 +36,7 @@ class RedisConfig(BaseModel):
     host: str = Field(default="localhost")
     port: int = Field(default=6379)
     db: int = Field(default=0)
-    password: str | None = Field(default=None)
+    password: Union[str, None] = Field(default=None)
 
     @classmethod
     def from_env(cls) -> "RedisConfig":
@@ -55,8 +57,8 @@ class RedisConfig(BaseModel):
 
 
 # Global instance - initialized at startup
-jwt_config: JWTConfig | None = None
-redis_config: RedisConfig | None = None
+jwt_config: Union[JWTConfig, None] = None
+redis_config: Union[RedisConfig, None] = None
 
 
 def get_jwt_config() -> JWTConfig:

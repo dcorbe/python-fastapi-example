@@ -1,6 +1,6 @@
 """Authentication dependencies."""
 
-from typing import Annotated, Any, Optional
+from typing import Annotated, Any, Union
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -17,8 +17,8 @@ from .service import AuthService
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login", auto_error=True)
 
 # Will be set by setup_auth
-_auth_service: Optional[AuthService] = None
-_redis_service: Optional[RedisService] = None
+_auth_service: Union[AuthService, None] = None
+_redis_service: Union[RedisService, None] = None
 
 
 def get_redis_service() -> RedisService:

@@ -1,7 +1,7 @@
 """Authentication service."""
 
 from datetime import UTC, datetime, timedelta
-from typing import Any, Dict
+from typing import Any, Dict, Union
 
 import jwt
 from fastapi import HTTPException, status
@@ -131,7 +131,7 @@ class AuthService:
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-    def _get_token_ttl(self, token: str) -> timedelta | None:
+    def _get_token_ttl(self, token: str) -> Union[timedelta, None]:
         """Get the time-to-live for a token."""
         try:
             payload = jwt.decode(

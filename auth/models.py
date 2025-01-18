@@ -1,6 +1,7 @@
 """Authentication models."""
 
 from datetime import UTC, datetime
+from typing import Union
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -42,8 +43,8 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     """Token data model."""
 
-    sub: str | None = None
-    exp: datetime | None = None
+    sub: Union[str, None] = None
+    exp: Union[datetime, None] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -53,7 +54,7 @@ class LoginAttempt(BaseModel):
 
     email: str
     attempts: int = 0
-    locked_until: datetime | None = None
+    locked_until: Union[datetime, None] = None
     last_attempt: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 

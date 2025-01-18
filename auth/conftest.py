@@ -1,7 +1,7 @@
 """Test fixtures for auth module."""
 
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Union
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -31,7 +31,7 @@ class MockRedis(AsyncRedis):
         """Mock exists that checks stored tokens."""
         return 1 if key in self._storage else 0
 
-    async def get(self, key: str) -> str | None:
+    async def get(self, key: str) -> Union[str, None]:
         """Mock get that returns stored tokens."""
         return self._storage.get(key)
 
