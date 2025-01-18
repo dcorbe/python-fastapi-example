@@ -33,4 +33,3 @@ per-file-ignores =
     database/migrations/versions/*.py: SIM,W291
     # Allow unused imports and non-top imports in Alembic env.py (for model registration)
     database/migrations/env.py: F401,E402
-    alembic/env.py: F401,E402
