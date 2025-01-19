@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -22,16 +22,9 @@ async def login(
     session: AsyncSession = Depends(get_session),
 ) -> Token:
     """Login endpoint."""
-    try:
-        user = await auth_service.authenticate_user(
-            form_data.username, form_data.password, session
-        )
-        access_token = auth_service.create_access_token({"sub": user.email})
-        return Token(access_token=access_token, token_type="bearer")
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e),
-        ) from e
+
+    user = await auth_service.authenticate_user(
+        form_data.username, form_data.password, session
+    )
+    access_token = auth_service.create_access_token({"sub": user.email})
+    return Token(access_token=access_token, token_type="bearer")
